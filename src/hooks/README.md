@@ -8,6 +8,25 @@ Ce dossier contient les hooks React personnalisés.
 - Utilisez le préfixe `use` pour les noms de hooks
 - Exportez les hooks depuis `index.ts` si nécessaire
 
+## Hooks disponibles
+
+### useTokenRefresh
+
+Hook pour gérer le refresh automatique des tokens d'authentification.
+
+```typescript
+import { useTokenRefresh } from '@hooks/useTokenRefresh';
+
+// Dans votre composant App
+useTokenRefresh(); // Active le refresh automatique
+```
+
+**Fonctionnalités :**
+
+- Refresh automatique toutes les 5 minutes
+- Refresh quand l'app revient au premier plan
+- Vérification au démarrage de l'app
+
 ## Exemple
 
 ```typescript

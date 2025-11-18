@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@services/supabase';
+import { TokenService } from '@services/tokenService';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import type { User, RegisterData } from '@types';
 
@@ -51,6 +52,8 @@ export const useAuthStore = create<AuthState>()(
           }
 
           if (data.user && data.session) {
+            // Sauvegarder les tokens dans Keychain
+            await TokenService.saveTokens(data.session);
             const user = mapSupabaseUserToUser(data.user);
             set({
               user,
@@ -92,6 +95,8 @@ export const useAuthStore = create<AuthState>()(
           }
 
           if (authData.user && authData.session) {
+            // Sauvegarder les tokens dans Keychain
+            await TokenService.saveTokens(authData.session);
             const user = mapSupabaseUserToUser(authData.user);
             set({
               user,
@@ -129,6 +134,9 @@ export const useAuthStore = create<AuthState>()(
           if (signOutError) {
             throw signOutError;
           }
+
+          // Supprimer les tokens de Keychain
+          await TokenService.clearTokens();
 
           set({
             user: null,
@@ -204,17 +212,23 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // Écouter les changements d'authentification Supabase
-supabase.auth.onAuthStateChange((event, session) => {
+supabase.auth.onAuthStateChange(async (event, session) => {
   const store = useAuthStore.getState();
 
   if (event === 'SIGNED_IN' && session?.user) {
+    // Sauvegarder les tokens dans Keychain
+    await TokenService.saveTokens(session);
     const user = mapSupabaseUserToUser(session.user);
     store.user = user;
     store.session = session;
   } else if (event === 'SIGNED_OUT') {
+    // Supprimer les tokens de Keychain
+    await TokenService.clearTokens();
     store.user = null;
     store.session = null;
   } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+    // Sauvegarder les nouveaux tokens dans Keychain
+    await TokenService.saveTokens(session);
     const user = mapSupabaseUserToUser(session.user);
     store.user = user;
     store.session = session;

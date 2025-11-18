@@ -2,32 +2,9 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthStackParamList } from './types';
 import { COLORS } from '@constants';
-
-// Importez vos écrans d'authentification ici
-// import { LoginScreen } from '@app/LoginScreen';
-// import { RegisterScreen } from '@app/RegisterScreen';
-// import { ForgotPasswordScreen } from '@app/ForgotPasswordScreen';
-
-// Écrans temporaires pour la structure
-import { StyleSheet, Text, View } from 'react-native';
-
-const LoginScreen = () => (
-  <View style={styles.container}>
-    <Text style={styles.text}>Login Screen</Text>
-  </View>
-);
-
-const RegisterScreen = () => (
-  <View style={styles.container}>
-    <Text style={styles.text}>Register Screen</Text>
-  </View>
-);
-
-const ForgotPasswordScreen = () => (
-  <View style={styles.container}>
-    <Text style={styles.text}>Forgot Password Screen</Text>
-  </View>
-);
+import { LoginScreen } from '@app/auth/LoginScreen';
+import { RegisterScreen } from '@app/auth/RegisterScreen';
+import { ForgotPasswordScreen } from '@app/auth/ForgotPasswordScreen';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -60,6 +37,7 @@ export const AuthNavigator: React.FC = () => {
         component={RegisterScreen}
         options={{
           title: 'Inscription',
+          headerShown: true,
         }}
       />
       <Stack.Screen
@@ -67,21 +45,9 @@ export const AuthNavigator: React.FC = () => {
         component={ForgotPasswordScreen}
         options={{
           title: 'Mot de passe oublié',
+          headerShown: true,
         }}
       />
     </Stack.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-});
