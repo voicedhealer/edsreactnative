@@ -56,6 +56,18 @@ export const API_ENDPOINTS = {
     EVENTS: `${API_BASE_URL}/search/events`,
     ALL: `${API_BASE_URL}/search/all`,
   },
+
+  // Gamification
+  GAMIFICATION: {
+    BASE: `${API_BASE_URL}/user/gamification`,
+  },
+
+  // Notifications
+  NOTIFICATIONS: {
+    REGISTER_TOKEN: `${API_BASE_URL}/notifications/register`,
+    UNREGISTER_TOKEN: `${API_BASE_URL}/notifications/unregister`,
+    UPDATE_TOKEN: `${API_BASE_URL}/notifications/update`,
+  },
 };
 
 export const API_CONFIG: {

@@ -142,4 +142,20 @@ export interface SearchParams extends SearchFilters {
   sortOrder?: 'asc' | 'desc';
 }
 
+// Types pour la gamification
+export interface UserBadge {
+  id: string;
+  type: 'curieux' | 'explorateur' | 'ambassadeur' | 'feu-artifice';
+  label: string;
+  emoji: string;
+  description: string;
+  unlockedAt?: string;
+}
+
+export interface UserGamification {
+  karmaPoints: number;
+  badges: UserBadge[];
+  totalEngagements: number;
+}
+
 // Ajoutez vos types personnalisés ici

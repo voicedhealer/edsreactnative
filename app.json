@@ -19,7 +19,17 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Cette application a besoin de votre localisation pour trouver les établissements à proximité.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Cette application a besoin de votre localisation pour trouver les établissements à proximité."
-      }
+      },
+      "plugins": [
+        [
+          "expo-notifications",
+          {
+            "icon": "./assets/icon.png",
+            "color": "#ff751f",
+            "sounds": []
+          }
+        ]
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -29,7 +39,12 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.envie2sortir.app",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
       "intentFilters": [
         {
           "action": "VIEW",
@@ -51,6 +66,23 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-secure-store"]
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#ff751f",
+          "sounds": []
+        }
+      ]
+    ],
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#ff751f",
+      "iosDisplayInForeground": true,
+      "androidMode": "default",
+      "androidCollapsedTitle": "#{unread_notifications} nouvelles notifications"
+    }
   }
 }

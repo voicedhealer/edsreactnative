@@ -30,6 +30,8 @@ export type AppStackParamList = {
     category?: string;
     filters?: SearchFilters;
   };
+  Map: undefined;
+  Favorites: undefined;
 };
 
 // Type racine combinant auth et app

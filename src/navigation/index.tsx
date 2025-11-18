@@ -7,6 +7,7 @@ import { AuthNavigator } from './AuthNavigator';
 import { AppNavigator } from './AppNavigator';
 import { linkingConfiguration } from './linking';
 import { useAuthStore } from '@store';
+import { useNotificationNavigation } from '@hooks/useNotificationNavigation';
 import { COLORS } from '@constants';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -14,6 +15,9 @@ const Stack = createStackNavigator<RootStackParamList>();
 export const RootNavigator: React.FC = () => {
   const { user, isLoading, checkSession } = useAuthStore();
   const isAuthenticated = !!user;
+
+  // Configurer la navigation depuis les notifications
+  useNotificationNavigation();
 
   useEffect(() => {
     // Vérifier la session au démarrage
