@@ -17,9 +17,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '@store';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '@constants';
 import { loginSchema, type LoginFormData } from './validationSchemas';
-import type { AuthStackParamList } from '@navigation/types';
+import type { AppStackParamList } from '@navigation/types';
 
-type NavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
+type NavigationProp = NativeStackNavigationProp<AppStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -42,7 +42,8 @@ export const LoginScreen: React.FC = () => {
     try {
       clearError();
       await login(data.email, data.password);
-      // La navigation se fera automatiquement via RootNavigator
+      // Fermer l'écran de connexion après succès
+      navigation.goBack();
     } catch (err) {
       Alert.alert('Erreur', error || 'Une erreur est survenue lors de la connexion');
     }

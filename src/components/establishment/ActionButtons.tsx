@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Animated } from 'react
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
 import * as Linking from 'expo-linking';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import {
   COLORS,
   SPACING,
@@ -12,7 +14,9 @@ import {
   Shadows,
   Typography,
 } from '@constants';
+import { useAuthStore } from '@store';
 import { useToggleFavorite, useIsFavorite, useFavorites } from '@hooks/useFavorites';
+import type { AppStackParamList } from '@navigation/types';
 
 interface ActionButtonsProps {
   establishmentId: string;
@@ -29,6 +33,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   favoriteId: propFavoriteId,
   onFavoriteChange,
 }) => {
+  const navigation = useNavigation<StackNavigationProp<AppStackParamList>>();
+  const { user } = useAuthStore();
   const [scaleAnim] = useState(new Animated.Value(1));
   const toggleFavorite = useToggleFavorite();
   const { data: isFavorite = false } = useIsFavorite('establishment', establishmentId);
@@ -47,6 +53,12 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   }, [propFavoriteId, favoritesData, isFavorite, establishmentId]);
 
   const handleFavorite = async () => {
+    // Si l'utilisateur n'est pas connecté, rediriger vers Login
+    if (!user) {
+      navigation.navigate('Login');
+      return;
+    }
+
     try {
       // Animation
       Animated.sequence([

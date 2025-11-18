@@ -21,15 +21,14 @@ const NavigationWrapper: React.FC<{ children: React.ReactNode }> = ({ children }
 };
 
 export const RootNavigator: React.FC = () => {
-  const { user, isLoading, checkSession } = useAuthStore();
-  const isAuthenticated = !!user;
+  const { isLoading, checkSession } = useAuthStore();
 
   useEffect(() => {
-    // Vérifier la session au démarrage
+    // Vérifier la session au démarrage (sans bloquer l'accès)
     checkSession();
   }, [checkSession]);
 
-  // Afficher un loader pendant la vérification de la session
+  // Afficher un loader pendant la vérification de la session (seulement au premier chargement)
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -38,15 +37,12 @@ export const RootNavigator: React.FC = () => {
     );
   }
 
+  // Toujours afficher AppNavigator - l'authentification n'est plus requise pour démarrer
   return (
     <NavigationContainer linking={linkingConfiguration}>
       <NavigationWrapper>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {isAuthenticated ? (
-            <Stack.Screen name="App" component={AppNavigator} />
-          ) : (
-            <Stack.Screen name="Auth" component={AuthNavigator} />
-          )}
+          <Stack.Screen name="App" component={AppNavigator} />
         </Stack.Navigator>
       </NavigationWrapper>
     </NavigationContainer>

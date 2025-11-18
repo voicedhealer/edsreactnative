@@ -11,6 +11,9 @@ import { SearchResultsScreen } from '@app/search/SearchResultsScreen';
 import { EstablishmentDetailScreen } from '@app/establishment/EstablishmentDetailScreen';
 import { MapScreen } from '@app/map/MapScreen';
 import { ProfileScreen, FavoritesScreen, SettingsScreen } from '@app/profile';
+import { LoginScreen } from '@app/auth/LoginScreen';
+import { RegisterScreen } from '@app/auth/RegisterScreen';
+import { ForgotPasswordScreen } from '@app/auth/ForgotPasswordScreen';
 
 const EventDetailsScreen = () => (
   <View style={styles.container}>
@@ -173,6 +176,31 @@ export const AppNavigator: React.FC = () => {
         component={MapScreen}
         options={{
           title: 'Carte interactive',
+        }}
+      />
+      {/* Écrans d'authentification - accessibles sans être connecté */}
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{
+          title: 'Connexion',
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen}
+        options={{
+          title: 'Inscription',
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{
+          title: 'Mot de passe oublié',
+          presentation: 'modal',
         }}
       />
     </Stack.Navigator>

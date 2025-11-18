@@ -17,9 +17,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '@store';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '@constants';
 import { registerSchema, type RegisterFormData } from './validationSchemas';
-import type { AuthStackParamList } from '@navigation/types';
+import type { AppStackParamList } from '@navigation/types';
 
-type NavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
+type NavigationProp = NativeStackNavigationProp<AppStackParamList, 'Register'>;
 
 export const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -55,7 +55,13 @@ export const RegisterScreen: React.FC = () => {
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('Login'),
+            onPress: () => {
+              navigation.goBack();
+              // Naviguer vers Login si nécessaire
+              setTimeout(() => {
+                navigation.navigate('Login');
+              }, 300);
+            },
           },
         ]
       );

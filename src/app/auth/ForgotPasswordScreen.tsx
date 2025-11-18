@@ -17,9 +17,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '@services/supabase';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '@constants';
 import { forgotPasswordSchema, type ForgotPasswordFormData } from './validationSchemas';
-import type { AuthStackParamList } from '@navigation/types';
+import type { AppStackParamList } from '@navigation/types';
 
-type NavigationProp = NativeStackNavigationProp<AuthStackParamList, 'ForgotPassword'>;
+type NavigationProp = NativeStackNavigationProp<AppStackParamList, 'ForgotPassword'>;
 
 export const ForgotPasswordScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();

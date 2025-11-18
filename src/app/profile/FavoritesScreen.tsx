@@ -7,16 +7,20 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   COLORS,
   SPACING,
   BORDER_RADIUS,
   FONT_SIZES,
   Shadows,
+  HeroGradient,
 } from '@constants';
+import { useAuthStore } from '@store';
 import { useFavorites, useRemoveFavorite } from '@hooks/useFavorites';
 import { EstablishmentCard } from '@components/search/EstablishmentCard';
 import type { AppStackParamList } from '@navigation/types';
@@ -26,6 +30,7 @@ type FavoritesScreenNavigationProp = StackNavigationProp<AppStackParamList>;
 
 export const FavoritesScreen: React.FC = () => {
   const navigation = useNavigation<FavoritesScreenNavigationProp>();
+  const { user } = useAuthStore();
   const {
     data: favoritesData,
     isLoading,
@@ -42,6 +47,45 @@ export const FavoritesScreen: React.FC = () => {
     if (!favoritesData) return [];
     return favoritesData.pages.flatMap((page) => page.data);
   }, [favoritesData]);
+
+  // Si l'utilisateur n'est pas connecté, afficher un écran d'invitation
+  if (!user) {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.notConnectedContainer}>
+        <LinearGradient
+          colors={HeroGradient.colors}
+          start={HeroGradient.start}
+          end={HeroGradient.end}
+          locations={HeroGradient.locations}
+          style={styles.notConnectedHeader}
+        >
+          <Text style={styles.notConnectedEmoji}>❤️</Text>
+          <Text style={styles.notConnectedTitle}>Mes Favoris</Text>
+          <Text style={styles.notConnectedSubtitle}>
+            Connectez-vous pour sauvegarder vos établissements et événements favoris
+          </Text>
+        </LinearGradient>
+
+        <View style={styles.notConnectedActions}>
+          <TouchableOpacity
+            style={styles.connectButton}
+            onPress={() => navigation.navigate('Login')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.connectButtonText}>Se connecter</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.registerButton}
+            onPress={() => navigation.navigate('Register')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.registerButtonText}>Créer un compte</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  }
 
   const handleRemoveFavorite = async (favoriteId: string) => {
     try {
@@ -281,6 +325,66 @@ const styles = StyleSheet.create({
   footerLoader: {
     paddingVertical: SPACING.md,
     alignItems: 'center',
+  },
+  notConnectedContainer: {
+    flexGrow: 1,
+  },
+  notConnectedHeader: {
+    paddingTop: 60,
+    paddingBottom: SPACING.xl,
+    paddingHorizontal: SPACING.md,
+    alignItems: 'center',
+  },
+  notConnectedEmoji: {
+    fontSize: 64,
+    marginBottom: SPACING.md,
+  },
+  notConnectedTitle: {
+    fontSize: FONT_SIZES.xxl,
+    fontWeight: '700',
+    color: COLORS.textLight,
+    marginBottom: SPACING.sm,
+  },
+  notConnectedSubtitle: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textLight,
+    opacity: 0.9,
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: SPACING.md,
+  },
+  notConnectedActions: {
+    padding: SPACING.md,
+    gap: SPACING.md,
+    marginTop: SPACING.xl,
+  },
+  connectButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.button,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    alignItems: 'center',
+    ...Shadows.buttonGradient,
+  },
+  connectButtonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+    color: COLORS.textLight,
+  },
+  registerButton: {
+    backgroundColor: COLORS.background,
+    borderRadius: BORDER_RADIUS.button,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    ...Shadows.card,
+  },
+  registerButtonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
 });
 

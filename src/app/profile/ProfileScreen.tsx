@@ -114,9 +114,59 @@ export const ProfileScreen: React.FC = () => {
 
   if (!user) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Utilisateur non connecté</Text>
-      </View>
+      <ScrollView style={styles.container} contentContainerStyle={styles.notConnectedContainer}>
+        <LinearGradient
+          colors={HeroGradient.colors}
+          start={HeroGradient.start}
+          end={HeroGradient.end}
+          locations={HeroGradient.locations}
+          style={styles.notConnectedHeader}
+        >
+          <Text style={styles.notConnectedEmoji}>👋</Text>
+          <Text style={styles.notConnectedTitle}>Bienvenue !</Text>
+          <Text style={styles.notConnectedSubtitle}>
+            Connectez-vous pour accéder à votre profil et gérer vos favoris
+          </Text>
+        </LinearGradient>
+
+        <View style={styles.notConnectedActions}>
+          <TouchableOpacity
+            style={styles.connectButton}
+            onPress={() => navigation.navigate('Login')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.connectButtonText}>Se connecter</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.registerButton}
+            onPress={() => navigation.navigate('Register')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.registerButtonText}>Créer un compte</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.notConnectedBenefits}>
+          <Text style={styles.benefitsTitle}>En vous connectant, vous pourrez :</Text>
+          <View style={styles.benefitItem}>
+            <Text style={styles.benefitIcon}>❤️</Text>
+            <Text style={styles.benefitText}>Sauvegarder vos établissements favoris</Text>
+          </View>
+          <View style={styles.benefitItem}>
+            <Text style={styles.benefitIcon}>🏆</Text>
+            <Text style={styles.benefitText}>Débloquer des badges et gagner du karma</Text>
+          </View>
+          <View style={styles.benefitItem}>
+            <Text style={styles.benefitIcon}>📱</Text>
+            <Text style={styles.benefitText}>Recevoir des notifications personnalisées</Text>
+          </View>
+          <View style={styles.benefitItem}>
+            <Text style={styles.benefitIcon}>⚙️</Text>
+            <Text style={styles.benefitText}>Personnaliser vos paramètres</Text>
+          </View>
+        </View>
+      </ScrollView>
     );
   }
 
@@ -477,6 +527,92 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     textAlign: 'center',
     marginTop: SPACING.xl,
+  },
+  notConnectedContainer: {
+    flexGrow: 1,
+  },
+  notConnectedHeader: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: SPACING.xl,
+    paddingHorizontal: SPACING.md,
+    alignItems: 'center',
+  },
+  notConnectedEmoji: {
+    fontSize: 64,
+    marginBottom: SPACING.md,
+  },
+  notConnectedTitle: {
+    fontSize: FONT_SIZES.xxl,
+    fontWeight: '700',
+    color: COLORS.textLight,
+    marginBottom: SPACING.sm,
+  },
+  notConnectedSubtitle: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textLight,
+    opacity: 0.9,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  notConnectedActions: {
+    padding: SPACING.md,
+    gap: SPACING.md,
+  },
+  connectButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.button,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    alignItems: 'center',
+    ...Shadows.buttonGradient,
+  },
+  connectButtonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+    color: COLORS.textLight,
+  },
+  registerButton: {
+    backgroundColor: COLORS.background,
+    borderRadius: BORDER_RADIUS.button,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    ...Shadows.card,
+  },
+  registerButtonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  notConnectedBenefits: {
+    padding: SPACING.md,
+    marginTop: SPACING.lg,
+  },
+  benefitsTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.md,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.gray50,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.card,
+    ...Shadows.card,
+  },
+  benefitIcon: {
+    fontSize: 24,
+    marginRight: SPACING.md,
+  },
+  benefitText: {
+    flex: 1,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textPrimary,
   },
 });
 

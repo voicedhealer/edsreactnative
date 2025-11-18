@@ -8,7 +8,6 @@ import { usePopularEstablishments, useNearbyEstablishments } from '@hooks';
 import { SearchBar } from '@components/home/SearchBar';
 import { CategoryGrid, type Category } from '@components/home/CategoryGrid';
 import { FeaturedCarousel } from '@components/home/FeaturedCarousel';
-import { GeolocationButton } from '@components/home/GeolocationButton';
 import { COLORS, SPACING, Typography, HeroGradient, Shadows, BORDER_RADIUS } from '@constants';
 import type { Establishment } from '@types';
 import type { AppStackParamList } from '@navigation/types';
@@ -80,10 +79,6 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('EstablishmentDetails', { establishmentId: establishment.id });
   };
 
-  const handleGeolocationFound = (latitude: number, longitude: number) => {
-    setUserLocation({ lat: latitude, lng: longitude });
-  };
-
   return (
     <View style={styles.container}>
       <ScrollView
@@ -113,11 +108,6 @@ export const HomeScreen: React.FC = () => {
         {/* Search Bar */}
         <View style={styles.searchBarContainer}>
           <SearchBar onSubmit={handleSearch} initialEnvie={activity} initialCity={city} />
-        </View>
-
-        {/* Geolocation Button */}
-        <View style={styles.geoContainer}>
-          <GeolocationButton onLocationFound={handleGeolocationFound} variant="outline" />
         </View>
 
         {/* Categories Section */}
@@ -188,11 +178,6 @@ const styles = StyleSheet.create({
     marginTop: -SPACING.lg,
     marginBottom: SPACING.md,
     zIndex: 100,
-  },
-  geoContainer: {
-    paddingHorizontal: SPACING.md,
-    marginBottom: SPACING.md,
-    marginTop: SPACING.sm,
   },
   section: {
     marginTop: SPACING.lg,

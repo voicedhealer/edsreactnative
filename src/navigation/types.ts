@@ -32,6 +32,9 @@ export type AppStackParamList = {
   };
   Map: undefined;
   Favorites: undefined;
+  Login: undefined;
+  Register: undefined;
+  ForgotPassword: undefined;
 };
 
 // Type racine combinant auth et app
