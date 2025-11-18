@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,130 +6,67 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  Animated,
   Dimensions,
-  PanResponder,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  COLORS,
-  SPACING,
-  BORDER_RADIUS,
-  FONT_SIZES,
-  Shadows,
-  ButtonGradient,
-  PremiumBorderGradient,
-} from '@constants';
+import BottomSheet from '@gorhom/bottom-sheet';
+import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES, Shadows, PremiumBorderGradient } from '@constants';
 import type { Establishment } from '@types';
-import type { AppStackParamList } from '@navigation/types';
 
-type NavigationProp = NativeStackNavigationProp<AppStackParamList>;
-
-interface BottomSheetProps {
-  establishment: Establishment;
+interface EstablishmentBottomSheetProps {
+  establishment: Establishment | null;
   onClose: () => void;
-  onViewDetails: () => void;
+  onPress: (establishment: Establishment) => void;
+  snapPoints?: (string | number)[];
 }
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SHEET_HEIGHT = SCREEN_HEIGHT * 0.4; // 40% de l'écran
-const MIN_SHEET_HEIGHT = 100; // Hauteur minimale
-
-export const BottomSheet: React.FC<BottomSheetProps> = ({
+export const EstablishmentBottomSheet: React.FC<EstablishmentBottomSheetProps> = ({
   establishment,
   onClose,
-  onViewDetails,
+  onPress,
+  snapPoints = ['25%', '50%', '90%'],
 }) => {
-  const navigation = useNavigation<NavigationProp>();
-  const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0) {
-          translateY.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > SHEET_HEIGHT / 3) {
-          // Fermer si glissé vers le bas de plus d'un tiers
-          closeSheet();
-        } else {
-          // Revenir à la position initiale
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 50,
-            friction: 8,
-          }).start();
-        }
-      },
-    })
-  ).current;
+  const bottomSheetRef = React.useRef<BottomSheet>(null);
 
-  useEffect(() => {
-    // Animation d'ouverture
-    Animated.spring(translateY, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 50,
-      friction: 8,
-    }).start();
-  }, [translateY]);
+  React.useEffect(() => {
+    if (establishment) {
+      bottomSheetRef.current?.expand();
+    } else {
+      bottomSheetRef.current?.close();
+    }
+  }, [establishment]);
 
-  const closeSheet = () => {
-    Animated.timing(translateY, {
-      toValue: SHEET_HEIGHT,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1 && establishment) {
       onClose();
-    });
-  };
+    }
+  }, [establishment, onClose]);
 
-  // Propriétés étendues
+  if (!establishment) {
+    return null;
+  }
+
   const subscription = (establishment as any).subscription as 'FREE' | 'PREMIUM' | undefined;
-  const isPremium = subscription === 'PREMIUM';
   const isHot = (establishment as any).isHot as boolean | undefined;
   const activeDeal = (establishment as any).activeDeal as boolean | undefined;
   const distance = (establishment as any).distance as number | undefined;
   const isOpen = (establishment as any).isOpen as boolean | undefined;
+  const isPremium = subscription === 'PREMIUM';
 
   return (
-    <>
-      {/* Overlay */}
-      <TouchableOpacity
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={closeSheet}
-      />
-
-      {/* Bottom Sheet */}
-      <Animated.View
-        style={[
-          styles.sheet,
-          {
-            transform: [{ translateY }],
-          },
-        ]}
-        {...panResponder.panHandlers}
-      >
-        {/* Handle bar */}
-        <View style={styles.handleContainer}>
-          <View style={styles.handle} />
-        </View>
-
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Image */}
+    <BottomSheet
+      ref={bottomSheetRef}
+      index={-1}
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      enablePanDownToClose
+      backgroundStyle={styles.bottomSheetBackground}
+      handleIndicatorStyle={styles.handleIndicator}
+    >
+      <View style={styles.contentContainer}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Image Header */}
           <View style={styles.imageContainer}>
             {establishment.images && establishment.images.length > 0 ? (
               <Image
@@ -138,15 +75,22 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 resizeMode="cover"
               />
             ) : (
-              <View style={styles.placeholderImage}>
+              <View style={[styles.image, styles.placeholderImage]}>
                 <Text style={styles.placeholderText}>📷</Text>
               </View>
             )}
 
-            {/* Badges */}
+            {/* Badges overlay */}
             {activeDeal && (
               <View style={styles.bonPlanBadge}>
                 <Text style={styles.bonPlanText}>🎁 Bon Plan</Text>
+              </View>
+            )}
+
+            {isOpen !== undefined && (
+              <View style={[styles.statusBadge, isOpen ? styles.statusOpen : styles.statusClosed]}>
+                <View style={[styles.statusDot, isOpen && styles.statusDotOpen]} />
+                <Text style={styles.statusText}>{isOpen ? 'Ouvert' : 'Fermé'}</Text>
               </View>
             )}
 
@@ -170,18 +114,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 </LinearGradient>
               </View>
             )}
-
-            {/* Statut ouvert/fermé */}
-            {isOpen !== undefined && (
-              <View style={[styles.statusBadge, isOpen ? styles.statusOpen : styles.statusClosed]}>
-                <View style={[styles.statusDot, isOpen && styles.statusDotOpen]} />
-                <Text style={styles.statusText}>{isOpen ? 'Ouvert' : 'Fermé'}</Text>
-              </View>
-            )}
           </View>
 
-          {/* Contenu */}
-          <View style={styles.infoContainer}>
+          {/* Content */}
+          <View style={styles.content}>
             <View style={styles.header}>
               <Text style={styles.name} numberOfLines={2}>
                 {establishment.name}
@@ -207,13 +143,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             </View>
 
             {establishment.description && (
-              <Text style={styles.description} numberOfLines={3}>
-                {establishment.description}
-              </Text>
+              <Text style={styles.description}>{establishment.description}</Text>
             )}
 
+            {/* Price Range */}
             {establishment.priceRange && (
               <View style={styles.priceContainer}>
+                <Text style={styles.priceLabel}>Prix moyen:</Text>
                 <Text style={styles.priceRange}>{establishment.priceRange}</Text>
               </View>
             )}
@@ -221,83 +157,54 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             {/* Tags */}
             {establishment.tags && establishment.tags.length > 0 && (
               <View style={styles.tagsContainer}>
-                {establishment.tags.slice(0, 3).map((tag, index) => (
+                {establishment.tags.map((tag, index) => (
                   <View key={index} style={styles.tag}>
                     <Text style={styles.tagText}>{tag}</Text>
                   </View>
                 ))}
               </View>
             )}
+
+            {/* Action Button */}
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => onPress(establishment)}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#ff751f', '#ff1fa9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.actionButtonGradient}
+              >
+                <Text style={styles.actionButtonText}>Voir les détails</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         </ScrollView>
-
-        {/* Bouton action */}
-        <View style={styles.actionContainer}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={closeSheet}
-          >
-            <Text style={styles.closeButtonText}>Fermer</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.detailsButton}
-            onPress={onViewDetails}
-          >
-            <LinearGradient
-              colors={ButtonGradient.colors}
-              start={ButtonGradient.start}
-              end={ButtonGradient.end}
-              style={styles.detailsButtonGradient}
-            >
-              <Text style={styles.detailsButtonText}>Voir les détails</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    </>
+      </View>
+    </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  sheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: SHEET_HEIGHT,
+  bottomSheetBackground: {
     backgroundColor: COLORS.background,
-    borderTopLeftRadius: BORDER_RADIUS.xl,
-    borderTopRightRadius: BORDER_RADIUS.xl,
+    borderTopLeftRadius: BORDER_RADIUS.modal,
+    borderTopRightRadius: BORDER_RADIUS.modal,
     ...Shadows.cardHover,
   },
-  handleContainer: {
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-  },
-  handle: {
+  handleIndicator: {
+    backgroundColor: COLORS.gray400,
     width: 40,
     height: 4,
-    backgroundColor: COLORS.gray400,
-    borderRadius: BORDER_RADIUS.full,
-  },
-  content: {
-    flex: 1,
   },
   contentContainer: {
-    paddingBottom: SPACING.md,
+    flex: 1,
   },
   imageContainer: {
     width: '100%',
-    height: 180,
+    height: 200,
     position: 'relative',
   },
   image: {
@@ -305,11 +212,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   placeholderImage: {
-    width: '100%',
-    height: '100%',
     backgroundColor: COLORS.gray100,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   placeholderText: {
     fontSize: 48,
@@ -322,6 +227,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(127, 0, 254, 0.6)',
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
+    borderTopLeftRadius: BORDER_RADIUS.modal,
+    borderTopRightRadius: BORDER_RADIUS.modal,
   },
   bonPlanText: {
     color: COLORS.textLight,
@@ -329,45 +236,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  trendingBadge: {
-    position: 'absolute',
-    bottom: SPACING.sm,
-    right: SPACING.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 117, 31, 0.9)',
-    borderRadius: BORDER_RADIUS.full,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    gap: SPACING.xs / 2,
-  },
-  trendingIcon: {
-    fontSize: FONT_SIZES.sm,
-  },
-  trendingText: {
-    fontSize: FONT_SIZES.xs,
-    fontWeight: '600',
-    color: COLORS.textLight,
-  },
-  premiumBadge: {
-    position: 'absolute',
-    top: SPACING.sm,
-    right: SPACING.sm,
-  },
-  premiumBadgeGradient: {
-    borderRadius: BORDER_RADIUS.full,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-  },
-  premiumBadgeText: {
-    fontSize: FONT_SIZES.xs,
-    fontWeight: '700',
-    color: COLORS.textLight,
-  },
   statusBadge: {
     position: 'absolute',
-    top: SPACING.sm,
-    left: SPACING.sm,
+    top: SPACING.md,
+    left: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
@@ -392,7 +264,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.text,
   },
-  infoContainer: {
+  trendingBadge: {
+    position: 'absolute',
+    bottom: SPACING.md,
+    right: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 117, 31, 0.9)',
+    borderRadius: BORDER_RADIUS.full,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    gap: SPACING.xs / 2,
+  },
+  trendingIcon: {
+    fontSize: FONT_SIZES.sm,
+  },
+  trendingText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+    color: COLORS.textLight,
+  },
+  premiumBadge: {
+    position: 'absolute',
+    top: SPACING.md,
+    right: SPACING.md,
+  },
+  premiumBadgeGradient: {
+    borderRadius: BORDER_RADIUS.full,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  premiumBadgeText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '700',
+    color: COLORS.textLight,
+  },
+  content: {
     padding: SPACING.md,
   },
   header: {
@@ -402,7 +309,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   name: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES.xl,
     fontWeight: '700',
     color: COLORS.textPrimary,
     flex: 1,
@@ -414,7 +321,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray100,
     borderRadius: BORDER_RADIUS.sm,
     paddingHorizontal: SPACING.xs,
-    paddingVertical: 2,
+    paddingVertical: 4,
     gap: SPACING.xs / 2,
   },
   ratingIcon: {
@@ -426,24 +333,24 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   category: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.md,
     color: COLORS.brandOrange,
     fontWeight: '600',
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   locationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   location: {
-    fontSize: FONT_SIZES.xs,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
     flex: 1,
   },
   distance: {
-    fontSize: FONT_SIZES.xs,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
     fontWeight: '600',
     marginLeft: SPACING.xs,
@@ -451,11 +358,18 @@ const styles = StyleSheet.create({
   description: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
     lineHeight: 20,
+    marginBottom: SPACING.sm,
   },
   priceContainer: {
-    marginBottom: SPACING.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  priceLabel: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
   },
   priceRange: {
     fontSize: FONT_SIZES.sm,
@@ -466,49 +380,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.xs,
+    marginBottom: SPACING.md,
   },
   tag: {
     backgroundColor: COLORS.gray100,
     borderRadius: BORDER_RADIUS.sm,
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 2,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
   },
   tagText: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
   },
-  actionContainer: {
-    flexDirection: 'row',
-    padding: SPACING.md,
-    gap: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.gray200,
-  },
-  closeButton: {
-    flex: 1,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: COLORS.gray100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
-  detailsButton: {
-    flex: 2,
+  actionButton: {
+    marginTop: SPACING.sm,
     borderRadius: BORDER_RADIUS.button,
     overflow: 'hidden',
     ...Shadows.buttonGradient,
   },
-  detailsButtonGradient: {
+  actionButtonGradient: {
     paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  detailsButtonText: {
+  actionButtonText: {
     fontSize: FONT_SIZES.md,
     fontWeight: '700',
     color: COLORS.textLight,

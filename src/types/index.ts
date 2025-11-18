@@ -109,6 +109,33 @@ export interface Event {
   updatedAt: string;
 }
 
+// Types pour l'engagement événements
+export type EngagementType = 'envie' | 'grande-envie' | 'decouvrir' | 'pas-envie';
+
+export interface EngagementStats {
+  envie: number;
+  'grande-envie': number;
+  decouvrir: number;
+  'pas-envie': number;
+}
+
+export interface EventBadge {
+  type: 'bronze' | 'silver' | 'gold' | 'violet';
+  label: string;
+  color: string;
+  emoji: string;
+}
+
+export interface EventEngagement {
+  eventId: string;
+  stats: EngagementStats;
+  score: number;
+  percentage: number;
+  badge: EventBadge | null;
+  userEngagement: EngagementType | null;
+  totalEngagements: number;
+}
+
 // Types pour les favoris
 export interface Favorite {
   id: string;

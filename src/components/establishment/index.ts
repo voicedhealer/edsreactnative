@@ -4,3 +4,4 @@ export { EventsList } from './EventsList';
 export { CommentsSection } from './CommentsSection';
 export { ActionButtons } from './ActionButtons';
 export { EstablishmentMap } from './EstablishmentMap';
+export { FavoriteButton } from './FavoriteButton';

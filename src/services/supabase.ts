@@ -1,38 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
 import { keychainStorage } from './keychainStorage';
 
-// Importer les variables d'environnement avec gestion d'erreur
-let SUPABASE_URL: string | undefined;
-let SUPABASE_ANON_KEY: string | undefined;
-
-try {
-  // Essayer d'importer depuis @env (react-native-dotenv)
-  const envModule = require('@env');
-  // Essayer d'abord sans préfixe, puis avec préfixe NEXT_PUBLIC_
-  SUPABASE_URL =
-    envModule.SUPABASE_URL ||
-    envModule.NEXT_PUBLIC_SUPABASE_URL ||
-    envModule.EXPO_PUBLIC_SUPABASE_URL;
-  SUPABASE_ANON_KEY =
-    envModule.SUPABASE_ANON_KEY ||
-    envModule.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    envModule.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-} catch (error) {
-  // Si l'import échoue, utiliser process.env comme fallback
-  console.warn('Could not load @env module, using process.env fallback');
-}
-
-// Vérifier que les variables d'environnement sont définies (accepter plusieurs formats)
+// Charger les variables d'environnement depuis expo-constants (méthode recommandée)
 const supabaseUrl =
-  SUPABASE_URL ||
+  Constants.expoConfig?.extra?.supabaseUrl ||
   process.env.SUPABASE_URL ||
   process.env.EXPO_PUBLIC_SUPABASE_URL ||
   process.env.NEXT_PUBLIC_SUPABASE_URL;
+
 const supabaseAnonKey =
-  SUPABASE_ANON_KEY ||
+  Constants.expoConfig?.extra?.supabaseAnonKey ||
   process.env.SUPABASE_ANON_KEY ||
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Debug: vérifier les valeurs finales
+console.log('[Supabase Config] URL:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'NOT SET');
+console.log('[Supabase Config] Key:', supabaseAnonKey ? 'SET (hidden)' : 'NOT SET');
 
 if (!supabaseUrl || !supabaseAnonKey) {
   const errorMessage = `

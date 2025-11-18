@@ -12,12 +12,17 @@ import { COLORS } from '@constants';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
+// Composant wrapper pour utiliser la navigation à l'intérieur du NavigationContainer
+const NavigationWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Configurer la navigation depuis les notifications
+  // Ce hook doit être appelé à l'intérieur du NavigationContainer
+  useNotificationNavigation();
+  return <>{children}</>;
+};
+
 export const RootNavigator: React.FC = () => {
   const { user, isLoading, checkSession } = useAuthStore();
   const isAuthenticated = !!user;
-
-  // Configurer la navigation depuis les notifications
-  useNotificationNavigation();
 
   useEffect(() => {
     // Vérifier la session au démarrage
@@ -35,13 +40,15 @@ export const RootNavigator: React.FC = () => {
 
   return (
     <NavigationContainer linking={linkingConfiguration}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
-          <Stack.Screen name="App" component={AppNavigator} />
-        ) : (
-          <Stack.Screen name="Auth" component={AuthNavigator} />
-        )}
-      </Stack.Navigator>
+      <NavigationWrapper>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {isAuthenticated ? (
+            <Stack.Screen name="App" component={AppNavigator} />
+          ) : (
+            <Stack.Screen name="Auth" component={AuthNavigator} />
+          )}
+        </Stack.Navigator>
+      </NavigationWrapper>
     </NavigationContainer>
   );
 };

@@ -37,6 +37,8 @@ export const API_ENDPOINTS = {
     SEARCH: `${API_BASE_URL}/events/search`,
     UPCOMING: `${API_BASE_URL}/events/upcoming`,
     BY_ESTABLISHMENT: (id: string) => `${API_BASE_URL}/events/establishment/${id}`,
+    ENGAGE: (id: string) => `${API_BASE_URL}/events/${id}/engage`,
+    ENGAGEMENT_STATS: (id: string) => `${API_BASE_URL}/events/${id}/engage`,
   },
 
   // Favoris

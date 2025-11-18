@@ -35,6 +35,7 @@ module.exports = function (api) {
           allowlist: null,
         },
       ],
+      'react-native-reanimated/plugin', // Doit être en dernier
     ],
   };
 };

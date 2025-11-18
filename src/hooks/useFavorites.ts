@@ -70,7 +70,7 @@ export const useIsFavorite = (type: 'establishment' | 'event', id: string) => {
 };
 
 /**
- * Hook pour ajouter un favori
+ * Hook pour ajouter un favori avec optimistic updates
  */
 export const useAddFavorite = () => {
   const queryClient = useQueryClient();
@@ -88,65 +88,166 @@ export const useAddFavorite = () => {
         establishmentId,
         eventId,
       });
-      return data;
+      return { data, establishmentId, eventId };
+    },
+    onMutate: async ({ establishmentId, eventId }) => {
+      // Annuler les requêtes en cours pour éviter les conflits
+      const type = establishmentId ? 'establishment' : 'event';
+      const id = establishmentId || eventId || '';
+      
+      await queryClient.cancelQueries({ queryKey: favoriteKeys.check(type, id) });
+      await queryClient.cancelQueries({ queryKey: favoriteKeys.list(user?.id || '') });
+
+      // Snapshot de la valeur précédente
+      const previousCheck = queryClient.getQueryData(favoriteKeys.check(type, id));
+      const previousList = queryClient.getQueryData(favoriteKeys.list(user?.id || ''));
+
+      // Optimistic update : mettre à jour immédiatement
+      queryClient.setQueryData(favoriteKeys.check(type, id), true);
+
+      // Optimistic update de la liste des favoris
+      if (user?.id && previousList) {
+        const optimisticFavorite: Favorite = {
+          id: `temp-${Date.now()}`,
+          userId: user.id,
+          establishmentId,
+          eventId,
+          createdAt: new Date().toISOString(),
+        };
+
+        queryClient.setQueryData(favoriteKeys.list(user.id), (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: any, index: number) => {
+              if (index === 0) {
+                return {
+                  ...page,
+                  data: [optimisticFavorite, ...page.data],
+                };
+              }
+              return page;
+            }),
+          };
+        });
+      }
+
+      return { previousCheck, previousList };
+    },
+    onError: (error, variables, context) => {
+      // Rollback en cas d'erreur
+      const type = variables.establishmentId ? 'establishment' : 'event';
+      const id = variables.establishmentId || variables.eventId || '';
+
+      if (context?.previousCheck) {
+        queryClient.setQueryData(favoriteKeys.check(type, id), context.previousCheck);
+      }
+      if (context?.previousList && user?.id) {
+        queryClient.setQueryData(favoriteKeys.list(user.id), context.previousList);
+      }
+
+      const apiError = getApiError(error);
+      throw apiError;
     },
     onSuccess: (data, variables) => {
-      // Invalider la liste des favoris
+      // Invalider pour récupérer les vraies données
       if (user?.id) {
         queryClient.invalidateQueries({ queryKey: favoriteKeys.list(user.id) });
       }
-      // Mettre à jour le statut de favori
-      if (variables.establishmentId) {
-        queryClient.setQueryData(
-          favoriteKeys.check('establishment', variables.establishmentId),
-          true
-        );
-      }
-      if (variables.eventId) {
-        queryClient.setQueryData(favoriteKeys.check('event', variables.eventId), true);
-      }
-    },
-    onError: error => {
-      const apiError = getApiError(error);
-      throw apiError;
+      const type = variables.establishmentId ? 'establishment' : 'event';
+      const id = variables.establishmentId || variables.eventId || '';
+      queryClient.invalidateQueries({ queryKey: favoriteKeys.check(type, id) });
     },
   });
 };
 
 /**
- * Hook pour supprimer un favori
+ * Hook pour supprimer un favori avec optimistic updates
  */
 export const useRemoveFavorite = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
 
   return useMutation({
-    mutationFn: async (favoriteId: string) => {
+    mutationFn: async ({
+      favoriteId,
+      establishmentId,
+      eventId,
+    }: {
+      favoriteId: string;
+      establishmentId?: string;
+      eventId?: string;
+    }) => {
       await apiClient.delete(API_ENDPOINTS.FAVORITES.REMOVE(favoriteId));
-      return { id: favoriteId };
+      return { favoriteId, establishmentId, eventId };
     },
-    onSuccess: (_, favoriteId) => {
-      // Invalider la liste des favoris
+    onMutate: async ({ favoriteId, establishmentId, eventId }) => {
+      // Annuler les requêtes en cours
+      const type = establishmentId ? 'establishment' : 'event';
+      const id = establishmentId || eventId || '';
+
+      await queryClient.cancelQueries({ queryKey: favoriteKeys.check(type, id) });
+      await queryClient.cancelQueries({ queryKey: favoriteKeys.list(user?.id || '') });
+
+      // Snapshot de la valeur précédente
+      const previousCheck = queryClient.getQueryData(favoriteKeys.check(type, id));
+      const previousList = queryClient.getQueryData(favoriteKeys.list(user?.id || ''));
+
+      // Optimistic update : mettre à jour immédiatement
+      queryClient.setQueryData(favoriteKeys.check(type, id), false);
+
+      // Optimistic update de la liste : supprimer le favori
+      if (user?.id && previousList) {
+        queryClient.setQueryData(favoriteKeys.list(user.id), (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => ({
+              ...page,
+              data: page.data.filter((fav: Favorite) => fav.id !== favoriteId),
+            })),
+          };
+        });
+      }
+
+      return { previousCheck, previousList };
+    },
+    onError: (error, variables, context) => {
+      // Rollback en cas d'erreur
+      const type = variables.establishmentId ? 'establishment' : 'event';
+      const id = variables.establishmentId || variables.eventId || '';
+
+      if (context?.previousCheck) {
+        queryClient.setQueryData(favoriteKeys.check(type, id), context.previousCheck);
+      }
+      if (context?.previousList && user?.id) {
+        queryClient.setQueryData(favoriteKeys.list(user.id), context.previousList);
+      }
+
+      const apiError = getApiError(error);
+      throw apiError;
+    },
+    onSuccess: (_, variables) => {
+      // Invalider pour récupérer les vraies données
       if (user?.id) {
         queryClient.invalidateQueries({ queryKey: favoriteKeys.list(user.id) });
       }
-      // Supprimer de la cache
-      queryClient.removeQueries({ queryKey: favoriteKeys.detail(favoriteId) });
-    },
-    onError: error => {
-      const apiError = getApiError(error);
-      throw apiError;
+      const type = variables.establishmentId ? 'establishment' : 'event';
+      const id = variables.establishmentId || variables.eventId || '';
+      queryClient.invalidateQueries({ queryKey: favoriteKeys.check(type, id) });
+      queryClient.removeQueries({ queryKey: favoriteKeys.detail(variables.favoriteId) });
     },
   });
 };
 
 /**
- * Hook pour toggle un favori (ajouter ou supprimer)
+ * Hook pour toggle un favori (ajouter ou supprimer) avec optimistic updates
  */
 export const useToggleFavorite = () => {
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
   return useMutation({
     mutationFn: async ({
@@ -161,19 +262,52 @@ export const useToggleFavorite = () => {
       isCurrentlyFavorite: boolean;
     }) => {
       if (isCurrentlyFavorite && favoriteId) {
-        await removeFavorite.mutateAsync(favoriteId);
-        return { isFavorite: false };
+        const result = await removeFavorite.mutateAsync({
+          favoriteId,
+          establishmentId: type === 'establishment' ? id : undefined,
+          eventId: type === 'event' ? id : undefined,
+        });
+        return { isFavorite: false, favoriteId: undefined };
       } else {
-        const data =
+        const result =
           type === 'establishment'
             ? await addFavorite.mutateAsync({ establishmentId: id })
             : await addFavorite.mutateAsync({ eventId: id });
-        return { isFavorite: true, favoriteId: data.id };
+        return { isFavorite: true, favoriteId: result.data.id };
+      }
+    },
+    onMutate: async ({ type, id, isCurrentlyFavorite }) => {
+      // Annuler les requêtes en cours
+      await queryClient.cancelQueries({ queryKey: favoriteKeys.check(type, id) });
+      await queryClient.cancelQueries({ queryKey: favoriteKeys.list(user?.id || '') });
+
+      // Snapshot
+      const previousCheck = queryClient.getQueryData(favoriteKeys.check(type, id));
+      const previousList = queryClient.getQueryData(favoriteKeys.list(user?.id || ''));
+
+      // Optimistic update
+      queryClient.setQueryData(favoriteKeys.check(type, id), !isCurrentlyFavorite);
+
+      return { previousCheck, previousList };
+    },
+    onError: (error, variables, context) => {
+      // Rollback
+      if (context?.previousCheck) {
+        queryClient.setQueryData(
+          favoriteKeys.check(variables.type, variables.id),
+          context.previousCheck
+        );
+      }
+      if (context?.previousList && user?.id) {
+        queryClient.setQueryData(favoriteKeys.list(user.id), context.previousList);
       }
     },
     onSuccess: (data, variables) => {
-      // Mettre à jour le statut de favori immédiatement
-      queryClient.setQueryData(favoriteKeys.check(variables.type, variables.id), data.isFavorite);
+      // Invalider pour synchroniser avec le backend
+      queryClient.invalidateQueries({ queryKey: favoriteKeys.check(variables.type, variables.id) });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: favoriteKeys.list(user.id) });
+      }
     },
   });
 };

@@ -18,6 +18,7 @@ import {
   Shadows,
   PremiumBorderGradient,
 } from '@constants';
+import { FavoriteButton } from '@components/establishment/FavoriteButton';
 import type { Establishment } from '@types';
 
 interface EstablishmentCardProps {
@@ -128,6 +129,11 @@ export const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
               </LinearGradient>
             </View>
           )}
+
+          {/* Bouton Favoris */}
+          <View style={styles.favoriteButtonContainer}>
+            <FavoriteButton establishmentId={establishment.id} size="small" variant="icon" />
+          </View>
         </View>
 
         {/* Content */}
@@ -400,5 +406,11 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
+  },
+  favoriteButtonContainer: {
+    position: 'absolute',
+    top: SPACING.md,
+    right: SPACING.md,
+    zIndex: 10,
   },
 });

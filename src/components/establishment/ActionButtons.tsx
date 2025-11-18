@@ -12,7 +12,7 @@ import {
   Shadows,
   Typography,
 } from '@constants';
-import { useToggleFavorite, useIsFavorite } from '@hooks';
+import { useToggleFavorite, useIsFavorite, useFavorites } from '@hooks/useFavorites';
 
 interface ActionButtonsProps {
   establishmentId: string;
@@ -26,21 +26,28 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   establishmentId,
   establishmentName,
   isFavorite: initialIsFavorite,
-  favoriteId,
+  favoriteId: propFavoriteId,
   onFavoriteChange,
 }) => {
-  const [localIsFavorite, setLocalIsFavorite] = useState(initialIsFavorite || false);
   const [scaleAnim] = useState(new Animated.Value(1));
   const toggleFavorite = useToggleFavorite();
-  const { data: isFavoriteFromApi } = useIsFavorite('establishment', establishmentId);
+  const { data: isFavorite = false } = useIsFavorite('establishment', establishmentId);
+  const { data: favoritesData } = useFavorites();
 
-  const isFavorite = isFavoriteFromApi !== undefined ? isFavoriteFromApi : localIsFavorite;
+  // Trouver le favoriteId dans la liste des favoris
+  const currentFavoriteId = React.useMemo(() => {
+    if (propFavoriteId) return propFavoriteId;
+    if (!favoritesData || !isFavorite) return undefined;
+    
+    const allFavorites = favoritesData.pages.flatMap(page => page.data);
+    const favorite = allFavorites.find(
+      fav => fav.establishmentId === establishmentId
+    );
+    return favorite?.id;
+  }, [propFavoriteId, favoritesData, isFavorite, establishmentId]);
 
   const handleFavorite = async () => {
     try {
-      const newFavoriteState = !isFavorite;
-      setLocalIsFavorite(newFavoriteState);
-
       // Animation
       Animated.sequence([
         Animated.spring(scaleAnim, {
@@ -58,13 +65,12 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
       await toggleFavorite.mutateAsync({
         type: 'establishment',
         id: establishmentId,
-        favoriteId,
+        favoriteId: currentFavoriteId,
         isCurrentlyFavorite: isFavorite,
       });
 
-      onFavoriteChange?.(newFavoriteState);
+      onFavoriteChange?.(!isFavorite);
     } catch (error) {
-      setLocalIsFavorite(isFavorite);
       Alert.alert('Erreur', 'Impossible de modifier les favoris');
     }
   };
