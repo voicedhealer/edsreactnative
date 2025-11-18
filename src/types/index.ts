@@ -40,12 +40,8 @@ export interface ApiError {
   status?: number;
 }
 
-// Types de navigation
-export type RootStackParamList = {
-  Home: undefined;
-  Profile: { userId: string };
-  // Ajoutez vos routes ici
-};
+// Types de navigation sont maintenant dans @navigation/types
+// Importez-les depuis '@navigation/types' si nécessaire
 
 // Types génériques
 export type Status = 'idle' | 'loading' | 'success' | 'error';

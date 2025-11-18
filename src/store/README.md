@@ -4,37 +4,75 @@ Ce dossier contient les stores Zustand pour la gestion d'état globale.
 
 ## Installation
 
-Pour utiliser Zustand, installez-le d'abord :
+Zustand est déjà installé dans le projet.
 
-```bash
-npm install zustand
-```
+## Structure
 
-## Structure recommandée
+- `authStore.ts` - Store d'authentification avec Supabase
+- `index.ts` - Export centralisé des stores
 
-- Un fichier par store (ex: `useAuthStore.ts`, `useUserStore.ts`)
-- Utilisez le préfixe `use` pour les noms de stores
-- Exportez les stores depuis `index.ts` si nécessaire
+## Auth Store
 
-## Exemple
+Le store d'authentification (`useAuthStore`) gère :
+
+- **État** : `user`, `session`, `isLoading`, `error`
+- **Actions** : `login`, `logout`, `register`, `checkSession`, `clearError`
+- **Persistance** : Les données sont sauvegardées dans AsyncStorage
+- **Synchronisation** : Écoute les changements d'état Supabase en temps réel
+
+### Utilisation
 
 ```typescript
-import { create } from 'zustand';
-import { User } from '@types';
+import { useAuthStore } from '@store';
 
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  login: (user: User, token: string) => void;
-  logout: () => void;
-}
+// Dans un composant
+const { user, isLoading, login, logout } = useAuthStore();
 
-export const useAuthStore = create<AuthState>(set => ({
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  login: (user, token) => set({ user, token, isAuthenticated: true }),
-  logout: () => set({ user: null, token: null, isAuthenticated: false }),
-}));
+// Connexion
+await login('user@example.com', 'password');
+
+// Déconnexion
+await logout();
+
+// Vérifier la session au démarrage
+useEffect(() => {
+  checkSession();
+}, []);
+```
+
+### Fonctionnalités
+
+- **Persistance** : La session est sauvegardée automatiquement
+- **Auto-refresh** : Les tokens sont rafraîchis automatiquement par Supabase
+- **Gestion d'erreurs** : Les erreurs sont stockées dans `error`
+- **Loading state** : `isLoading` indique les opérations en cours
+
+### Exemple complet
+
+```typescript
+import { useAuthStore } from '@store';
+import { useEffect } from 'react';
+
+const MyComponent = () => {
+  const { user, isLoading, error, login, checkSession } = useAuthStore();
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
+  const handleLogin = async () => {
+    try {
+      await login('user@example.com', 'password');
+      // Navigation automatique après connexion
+    } catch (err) {
+      console.error('Erreur de connexion:', err);
+    }
+  };
+
+  if (isLoading) return <Loading />;
+  if (error) return <Error message={error} />;
+  if (user) return <Welcome user={user} />;
+
+  return <LoginForm onLogin={handleLogin} />;
+};
 ```

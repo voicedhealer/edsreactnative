@@ -1,0 +1,195 @@
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { AppStackParamList, MainTabParamList } from './types';
+import { COLORS } from '@constants';
+
+// Importez vos écrans ici
+// import { HomeScreen } from '@app/HomeScreen';
+// import { SearchScreen } from '@app/SearchScreen';
+// etc.
+
+// Écrans temporaires pour la structure
+import { StyleSheet, Text, View } from 'react-native';
+
+const HomeScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Home Screen</Text>
+  </View>
+);
+
+const SearchScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Search Screen</Text>
+  </View>
+);
+
+const FavoritesScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Favorites Screen</Text>
+  </View>
+);
+
+const ProfileScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Profile Screen</Text>
+  </View>
+);
+
+const EventDetailsScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Event Details Screen</Text>
+  </View>
+);
+
+const CreateEventScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Create Event Screen</Text>
+  </View>
+);
+
+const EditProfileScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Edit Profile Screen</Text>
+  </View>
+);
+
+const SettingsScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Settings Screen</Text>
+  </View>
+);
+
+// Bottom Tab Navigator
+const Tab = createBottomTabNavigator<MainTabParamList>();
+
+const MainTabsNavigator: React.FC = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarStyle: {
+          backgroundColor: COLORS.background,
+          borderTopColor: COLORS.border,
+        },
+        headerStyle: {
+          backgroundColor: COLORS.primary,
+        },
+        headerTintColor: COLORS.textLight,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: 'Accueil',
+          tabBarLabel: 'Accueil',
+          // tabBarIcon: ({ color, size }) => <Icon name="home" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{
+          title: 'Recherche',
+          tabBarLabel: 'Recherche',
+          // tabBarIcon: ({ color, size }) => <Icon name="search" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Favorites"
+        component={FavoritesScreen}
+        options={{
+          title: 'Favoris',
+          tabBarLabel: 'Favoris',
+          // tabBarIcon: ({ color, size }) => <Icon name="heart" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          title: 'Profil',
+          tabBarLabel: 'Profil',
+          // tabBarIcon: ({ color, size }) => <Icon name="user" size={size} color={color} />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
+// Stack Navigator principal
+const Stack = createNativeStackNavigator<AppStackParamList>();
+
+export const AppNavigator: React.FC = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: COLORS.primary,
+        },
+        headerTintColor: COLORS.textLight,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+        contentStyle: {
+          backgroundColor: COLORS.background,
+        },
+      }}
+    >
+      <Stack.Screen
+        name="MainTabs"
+        component={MainTabsNavigator}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="EventDetails"
+        component={EventDetailsScreen}
+        options={{
+          title: "Détails de l'événement",
+        }}
+      />
+      <Stack.Screen
+        name="CreateEvent"
+        component={CreateEventScreen}
+        options={{
+          title: 'Créer un événement',
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{
+          title: 'Modifier le profil',
+        }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: 'Paramètres',
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  text: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+});

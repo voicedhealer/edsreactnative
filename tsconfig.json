@@ -25,47 +25,19 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@components/*": [
-        "./src/components/*"
-      ],
-      "@app/*": [
-        "./src/app/*"
-      ],
-      "@navigation/*": [
-        "./src/navigation/*"
-      ],
-      "@utils/*": [
-        "./src/utils/*"
-      ],
-      "@types/*": [
-        "./src/types/*"
-      ],
-      "@hooks/*": [
-        "./src/hooks/*"
-      ],
-      "@services/*": [
-        "./src/services/*"
-      ],
-      "@store/*": [
-        "./src/store/*"
-      ],
-      "@constants/*": [
-        "./src/constants/*"
-      ],
-      "@assets/*": [
-        "./assets/*"
-      ]
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@app/*": ["./src/app/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@types/*": ["./src/types/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@services/*": ["./src/services/*"],
+      "@store/*": ["./src/store/*"],
+      "@constants/*": ["./src/constants/*"],
+      "@assets/*": ["./assets/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "src/types/env.d.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "src/types/env.d.ts"],
+  "exclude": ["node_modules"]
 }
