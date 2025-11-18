@@ -1,2 +1,3 @@
-export { EstablishmentBottomSheet } from './BottomSheet';
+export { BottomSheet } from './BottomSheet';
+export { CustomMarker } from './CustomMarker';
 

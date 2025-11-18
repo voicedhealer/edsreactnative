@@ -24,14 +24,13 @@ export type AppStackParamList = {
   CreateEvent: undefined;
   EditProfile: undefined;
   Settings: undefined;
+  Map: undefined;
   SearchResults: {
     city?: string;
     activity?: string;
     category?: string;
     filters?: SearchFilters;
   };
-  Map: undefined;
-  Favorites: undefined;
 };
 
 // Type racine combinant auth et app

@@ -10,7 +10,24 @@ import { HomeScreen } from '@app/home/HomeScreen';
 import { SearchResultsScreen } from '@app/search/SearchResultsScreen';
 import { EstablishmentDetailScreen } from '@app/establishment/EstablishmentDetailScreen';
 import { MapScreen } from '@app/map/MapScreen';
-import { ProfileScreen, FavoritesScreen, SettingsScreen } from '@app/profile';
+
+const SearchScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Search Screen</Text>
+  </View>
+);
+
+const FavoritesScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Favorites Screen</Text>
+  </View>
+);
+
+const ProfileScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.text}>Profile Screen</Text>
+  </View>
+);
 
 const EventDetailsScreen = () => (
   <View style={styles.container}>
@@ -80,7 +97,6 @@ const MainTabsNavigator: React.FC = () => {
         options={{
           title: 'Favoris',
           tabBarLabel: 'Favoris',
-          headerShown: false,
           // tabBarIcon: ({ color, size }) => <Icon name="heart" size={size} color={color} />,
         }}
       />
@@ -90,7 +106,6 @@ const MainTabsNavigator: React.FC = () => {
         options={{
           title: 'Profil',
           tabBarLabel: 'Profil',
-          headerShown: false,
           // tabBarIcon: ({ color, size }) => <Icon name="user" size={size} color={color} />,
         }}
       />
@@ -155,13 +170,6 @@ export const AppNavigator: React.FC = () => {
         }}
       />
       <Stack.Screen
-        name="Favorites"
-        component={FavoritesScreen}
-        options={{
-          title: 'Mes Favoris',
-        }}
-      />
-      <Stack.Screen
         name="SearchResults"
         component={SearchResultsScreen}
         options={{
@@ -172,7 +180,7 @@ export const AppNavigator: React.FC = () => {
         name="Map"
         component={MapScreen}
         options={{
-          title: 'Carte interactive',
+          title: 'Carte',
         }}
       />
     </Stack.Navigator>

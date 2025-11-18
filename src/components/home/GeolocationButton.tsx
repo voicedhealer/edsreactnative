@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   TouchableOpacity,
   Text,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   ViewStyle,
 } from 'react-native';
-import * as Location from 'expo-location';
+import { useLocation } from '@hooks';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '@constants';
 
 interface GeolocationButtonProps {
@@ -21,40 +20,14 @@ export const GeolocationButton: React.FC<GeolocationButtonProps> = ({
   style,
   variant = 'primary',
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const { getCurrentLocation, isLoading, error } = useLocation();
 
-  const requestLocationPermission = async () => {
-    try {
-      setIsLoading(true);
-
-      // Vérifier les permissions
-      const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
-
-      if (foregroundStatus !== 'granted') {
-        Alert.alert(
-          'Permission refusée',
-          'La géolocalisation est nécessaire pour trouver les établissements à proximité.',
-          [{ text: 'OK' }]
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      // Obtenir la position actuelle
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const { latitude, longitude } = location.coords;
-      onLocationFound(latitude, longitude);
-    } catch (error) {
-      console.error('Erreur de géolocalisation:', error);
-      Alert.alert('Erreur', "Impossible d'obtenir votre position. Veuillez réessayer.", [
-        { text: 'OK' },
-      ]);
-    } finally {
-      setIsLoading(false);
+  const handlePress = async () => {
+    const location = await getCurrentLocation();
+    if (location) {
+      onLocationFound(location.latitude, location.longitude);
     }
+    // Les erreurs sont gérées par le service (alertes affichées automatiquement)
   };
 
   const getButtonStyle = () => {
@@ -80,7 +53,7 @@ export const GeolocationButton: React.FC<GeolocationButtonProps> = ({
   return (
     <TouchableOpacity
       style={[getButtonStyle(), style, isLoading && styles.buttonDisabled]}
-      onPress={requestLocationPermission}
+      onPress={handlePress}
       disabled={isLoading}
       activeOpacity={0.7}
     >

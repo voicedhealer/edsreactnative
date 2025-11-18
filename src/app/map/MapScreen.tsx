@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,26 +6,25 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  PermissionsAndroid,
   Alert,
-  Dimensions,
 } from 'react-native';
-import { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import { Marker, PROVIDER_GOOGLE, Region, LatLng } from 'react-native-maps';
 import MapView from 'react-native-map-clustering';
 import * as Location from 'expo-location';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES, Shadows, ButtonGradient } from '@constants';
-import { useNearbyEstablishments } from '@hooks/useEstablishments';
-import { EstablishmentBottomSheet } from '@components/map/BottomSheet';
+import { BottomSheet } from '@components/map/BottomSheet';
+import { CustomMarker } from '@components/map/CustomMarker';
+import { useEstablishments, useNearbyEstablishments } from '@hooks';
+import { COLORS, SPACING, BORDER_RADIUS, Shadows, ButtonGradient, Typography } from '@constants';
 import type { Establishment } from '@types';
 import type { AppStackParamList } from '@navigation/types';
 
-type MapScreenNavigationProp = StackNavigationProp<AppStackParamList>;
+type NavigationProp = NativeStackNavigationProp<AppStackParamList>;
 
-const { width, height } = Dimensions.get('window');
-
-// Région par défaut (France)
+// Région par défaut (France - centre)
 const DEFAULT_REGION: Region = {
   latitude: 46.6034,
   longitude: 1.8883,
@@ -33,92 +32,101 @@ const DEFAULT_REGION: Region = {
   longitudeDelta: 5.0,
 };
 
-// Région initiale pour Paris (si pas de géolocalisation)
-const PARIS_REGION: Region = {
-  latitude: 48.8566,
-  longitude: 2.3522,
+// Région pour zoom initial après géolocalisation
+const INITIAL_ZOOM_REGION: Region = {
+  latitude: 0,
+  longitude: 0,
   latitudeDelta: 0.1,
   longitudeDelta: 0.1,
 };
 
 export const MapScreen: React.FC = () => {
-  const navigation = useNavigation<MapScreenNavigationProp>();
+  const navigation = useNavigation<NavigationProp>();
   const mapRef = useRef<MapView>(null);
-  
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
+  const [userLocation, setUserLocation] = useState<LatLng | null>(null);
   const [selectedEstablishment, setSelectedEstablishment] = useState<Establishment | null>(null);
-  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
 
-  // Récupérer les établissements à proximité
+  // Récupérer les établissements pour la carte
+  // Si géolocalisation activée, utiliser nearby, sinon utiliser tous les établissements
   const {
-    data: establishmentsData,
-    isLoading: isLoadingEstablishments,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    data: nearbyData,
+    isLoading: isLoadingNearby,
   } = useNearbyEstablishments(
-    userLocation?.latitude || region.latitude,
-    userLocation?.longitude || region.longitude,
-    10, // rayon de 10km
-    !!userLocation || !isLoadingLocation
+    userLocation?.latitude || 0,
+    userLocation?.longitude || 0,
+    50, // Rayon large pour la carte
+    hasLocationPermission && !!userLocation
   );
 
-  // Flatten des établissements depuis toutes les pages
-  const establishments = useMemo(() => {
-    if (!establishmentsData) return [];
-    return establishmentsData.pages.flatMap((page) => page.data);
-  }, [establishmentsData]);
+  const {
+    data: allEstablishmentsData,
+    isLoading: isLoadingAll,
+  } = useEstablishments();
 
-  // Demander la permission de géolocalisation
-  useEffect(() => {
-    requestLocationPermission();
-  }, []);
+  // Combiner les établissements
+  const establishments: Establishment[] = hasLocationPermission && userLocation
+    ? (nearbyData?.pages.flatMap(page => page.data) || [])
+    : (allEstablishmentsData?.pages.flatMap(page => page.data) || []);
 
-  const requestLocationPermission = async () => {
+  const isLoading = isLoadingNearby || isLoadingAll;
+
+  // Demander les permissions de géolocalisation
+  const requestLocationPermission = useCallback(async () => {
     try {
       setIsLoadingLocation(true);
-      
-      const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
-      
-      if (existingStatus === 'granted') {
-        setLocationPermissionGranted(true);
-        getCurrentLocation();
-        return;
+
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert(
+            'Permission refusée',
+            'La géolocalisation est nécessaire pour afficher les établissements près de vous.',
+            [{ text: 'OK' }]
+          );
+          setIsLoadingLocation(false);
+          return false;
+        }
       }
 
       const { status } = await Location.requestForegroundPermissionsAsync();
-      
-      if (status === 'granted') {
-        setLocationPermissionGranted(true);
-        getCurrentLocation();
-      } else {
-        setLocationPermissionGranted(false);
-        // Utiliser région par défaut (Paris)
-        setRegion(PARIS_REGION);
+      if (status !== 'granted') {
         Alert.alert(
           'Permission refusée',
-          'La géolocalisation est désactivée. Vous pouvez toujours explorer la carte manuellement.',
+          'La géolocalisation est nécessaire pour afficher les établissements près de vous.',
           [{ text: 'OK' }]
         );
+        setIsLoadingLocation(false);
+        return false;
       }
+
+      setHasLocationPermission(true);
+      return true;
     } catch (error) {
       console.error('Erreur lors de la demande de permission:', error);
-      setLocationPermissionGranted(false);
-      setRegion(PARIS_REGION);
-    } finally {
       setIsLoadingLocation(false);
+      return false;
     }
-  };
+  }, []);
 
-  const getCurrentLocation = async () => {
+  // Obtenir la position actuelle de l'utilisateur
+  const getCurrentLocation = useCallback(async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      setIsLoadingLocation(false);
+      return;
+    }
+
     try {
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
 
-      const newLocation = {
+      const newLocation: LatLng = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       };
@@ -127,172 +135,137 @@ export const MapScreen: React.FC = () => {
 
       // Centrer la carte sur la position de l'utilisateur
       const newRegion: Region = {
-        ...newLocation,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
+        ...INITIAL_ZOOM_REGION,
+        latitude: newLocation.latitude,
+        longitude: newLocation.longitude,
       };
 
       setRegion(newRegion);
       mapRef.current?.animateToRegion(newRegion, 1000);
+      setIsLoadingLocation(false);
     } catch (error) {
       console.error('Erreur lors de la récupération de la position:', error);
-      setRegion(PARIS_REGION);
+      Alert.alert(
+        'Erreur',
+        'Impossible de récupérer votre position. Veuillez réessayer.',
+        [{ text: 'OK' }]
+      );
+      setIsLoadingLocation(false);
     }
-  };
+  }, [requestLocationPermission]);
 
-  const handleMarkerPress = (establishment: Establishment) => {
+  // Vérifier les permissions au chargement
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status === 'granted') {
+        setHasLocationPermission(true);
+        getCurrentLocation();
+      }
+    };
+    checkPermissions();
+  }, [getCurrentLocation]);
+
+  // Gérer le tap sur un marqueur
+  const handleMarkerPress = useCallback((establishment: Establishment) => {
     setSelectedEstablishment(establishment);
-  };
+  }, []);
 
-  const handleBottomSheetClose = () => {
+  // Fermer le bottom sheet
+  const handleCloseBottomSheet = useCallback(() => {
     setSelectedEstablishment(null);
-  };
+  }, []);
 
-  const handleEstablishmentPress = (establishment: Establishment) => {
-    navigation.navigate('EstablishmentDetails', {
-      establishmentId: establishment.id,
-    });
-    setSelectedEstablishment(null);
-  };
-
-  const handleCenterOnUser = () => {
-    if (userLocation) {
-      const newRegion: Region = {
-        ...userLocation,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      };
-      mapRef.current?.animateToRegion(newRegion, 1000);
-    } else {
-      requestLocationPermission();
+  // Naviguer vers les détails de l'établissement
+  const handleViewDetails = useCallback(() => {
+    if (selectedEstablishment) {
+      navigation.navigate('EstablishmentDetails', {
+        establishmentId: selectedEstablishment.id,
+      });
+      setSelectedEstablishment(null);
     }
-  };
+  }, [selectedEstablishment, navigation]);
 
-  const renderMarker = (establishment: Establishment) => {
-    const subscription = (establishment as any).subscription as 'FREE' | 'PREMIUM' | undefined;
-    const isPremium = subscription === 'PREMIUM';
-    const isHot = (establishment as any).isHot as boolean | undefined;
-
-    return (
-      <Marker
-        key={establishment.id}
-        coordinate={{
-          latitude: establishment.latitude || 0,
-          longitude: establishment.longitude || 0,
-        }}
-        onPress={() => handleMarkerPress(establishment)}
-        tracksViewChanges={false}
-      >
-        <View style={styles.markerContainer}>
-          {isPremium ? (
-            <LinearGradient
-              colors={ButtonGradient.colors}
-              start={ButtonGradient.start}
-              end={ButtonGradient.end}
-              style={styles.markerPremium}
-            >
-              <Text style={styles.markerText}>👑</Text>
-            </LinearGradient>
-          ) : (
-            <View style={[styles.marker, isHot && styles.markerHot]}>
-              <View style={styles.markerInner}>
-                <Text style={styles.markerEmoji}>📍</Text>
-              </View>
-            </View>
-          )}
-        </View>
-      </Marker>
-    );
-  };
-
-  const renderCluster = (cluster: any) => {
-    const { pointCount, coordinate, clusterId } = cluster;
-    const pointCountFormatted = pointCount > 99 ? '99+' : pointCount.toString();
-
-    return (
-      <Marker
-        key={`cluster-${clusterId}`}
-        coordinate={coordinate}
-        tracksViewChanges={false}
-      >
-        <View style={styles.clusterContainer}>
-          <LinearGradient
-            colors={ButtonGradient.colors}
-            start={ButtonGradient.start}
-            end={ButtonGradient.end}
-            style={styles.cluster}
-          >
-            <Text style={styles.clusterText}>{pointCountFormatted}</Text>
-          </LinearGradient>
-        </View>
-      </Marker>
-    );
-  };
-
-  if (isLoadingLocation) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.brandOrange} />
-        <Text style={styles.loadingText}>Chargement de la carte...</Text>
-      </View>
-    );
-  }
+  // Gérer le changement de région de la carte
+  const handleRegionChangeComplete = useCallback((newRegion: Region) => {
+    setRegion(newRegion);
+  }, []);
 
   return (
     <View style={styles.container}>
-      <MapViewClustering
+      {/* Carte */}
+      <MapView
         ref={mapRef}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
-        initialRegion={region}
+        initialRegion={DEFAULT_REGION}
         region={region}
-        onRegionChangeComplete={setRegion}
-        showsUserLocation={locationPermissionGranted}
+        onRegionChangeComplete={handleRegionChangeComplete}
+        showsUserLocation={hasLocationPermission}
         showsMyLocationButton={false}
         showsCompass={true}
-        toolbarEnabled={false}
+        mapType="standard"
+        clusterColor={COLORS.brandOrange}
+        clusterTextColor={COLORS.textLight}
+        clusterFontFamily={Typography.fontFamily}
         radius={50}
-        minZoom={10}
-        maxZoom={18}
-        extent={512}
-        nodeSize={64}
-        renderCluster={renderCluster}
+        maxZoom={15}
+        minZoom={3}
       >
         {establishments
-          .filter((est) => est.latitude && est.longitude)
-          .map((establishment) => renderMarker(establishment))}
-      </MapViewClustering>
+          .filter(est => est.latitude && est.longitude)
+          .map(establishment => (
+            <Marker
+              key={establishment.id}
+              coordinate={{
+                latitude: establishment.latitude!,
+                longitude: establishment.longitude!,
+              }}
+              onPress={() => handleMarkerPress(establishment)}
+            >
+              <CustomMarker establishment={establishment} />
+            </Marker>
+          ))}
+      </MapView>
 
-      {/* Bouton centrer sur utilisateur */}
+      {/* Bouton géolocalisation */}
       <TouchableOpacity
-        style={styles.centerButton}
-        onPress={handleCenterOnUser}
-        activeOpacity={0.8}
+        style={styles.locationButton}
+        onPress={getCurrentLocation}
+        disabled={isLoadingLocation}
       >
         <LinearGradient
           colors={ButtonGradient.colors}
           start={ButtonGradient.start}
           end={ButtonGradient.end}
-          style={styles.centerButtonGradient}
+          style={styles.locationButtonGradient}
         >
-          <Text style={styles.centerButtonText}>📍</Text>
+          {isLoadingLocation ? (
+            <ActivityIndicator color={COLORS.textLight} size="small" />
+          ) : (
+            <Text style={styles.locationButtonText}>📍</Text>
+          )}
         </LinearGradient>
       </TouchableOpacity>
 
       {/* Indicateur de chargement */}
-      {isLoadingEstablishments && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="small" color={COLORS.brandOrange} />
-          <Text style={styles.loadingOverlayText}>Chargement des établissements...</Text>
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color={COLORS.brandOrange} />
+            <Text style={styles.loadingText}>Chargement des établissements...</Text>
+          </View>
         </View>
       )}
 
-      {/* Bottom Sheet */}
-      <EstablishmentBottomSheet
-        establishment={selectedEstablishment}
-        onClose={handleBottomSheetClose}
-        onPress={handleEstablishmentPress}
-      />
+      {/* Bottom Sheet pour aperçu établissement */}
+      {selectedEstablishment && (
+        <BottomSheet
+          establishment={selectedEstablishment}
+          onClose={handleCloseBottomSheet}
+          onViewDetails={handleViewDetails}
+        />
+      )}
     </View>
   );
 };
@@ -300,117 +273,47 @@ export const MapScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.background,
   },
   map: {
-    width: '100%',
-    height: '100%',
-  },
-  loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
   },
-  loadingText: {
-    marginTop: SPACING.md,
-    fontSize: FONT_SIZES.md,
-    color: COLORS.textSecondary,
-  },
-  markerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  marker: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
-    borderWidth: 3,
-    borderColor: COLORS.brandOrange,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.card,
-  },
-  markerHot: {
-    borderColor: COLORS.brandRed,
-  },
-  markerInner: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: COLORS.brandOrange,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markerPremium: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.buttonGradient,
-  },
-  markerText: {
-    fontSize: 20,
-  },
-  markerEmoji: {
-    fontSize: 16,
-  },
-  clusterContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cluster: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: COLORS.background,
-    ...Shadows.buttonGradient,
-  },
-  clusterText: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: '700',
-    color: COLORS.textLight,
-  },
-  centerButton: {
+  locationButton: {
     position: 'absolute',
-    bottom: 120,
+    bottom: SPACING.xl + 100, // Au-dessus du bottom sheet
     right: SPACING.md,
-    borderRadius: BORDER_RADIUS.full,
-    overflow: 'hidden',
     ...Shadows.buttonGradient,
   },
-  centerButtonGradient: {
+  locationButtonGradient: {
     width: 56,
     height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
+    borderRadius: BORDER_RADIUS.full,
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  centerButtonText: {
+  locationButtonText: {
     fontSize: 24,
   },
-  loadingOverlay: {
+  loadingContainer: {
     position: 'absolute',
-    top: SPACING.lg,
+    top: 0,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    marginHorizontal: SPACING.md,
-    flexDirection: 'row',
+    bottom: 0,
     justifyContent: 'center',
-    gap: SPACING.sm,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  loadingBox: {
+    backgroundColor: COLORS.background,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    alignItems: 'center',
     ...Shadows.card,
   },
-  loadingOverlayText: {
-    fontSize: FONT_SIZES.sm,
+  loadingText: {
+    marginTop: SPACING.sm,
+    fontSize: 14,
     color: COLORS.textSecondary,
   },
 });
