@@ -5,18 +5,7 @@ import { AppStackParamList, MainTabParamList } from './types';
 import { COLORS } from '@constants';
 
 // Importez vos écrans ici
-// import { HomeScreen } from '@app/HomeScreen';
-// import { SearchScreen } from '@app/SearchScreen';
-// etc.
-
-// Écrans temporaires pour la structure
-import { StyleSheet, Text, View } from 'react-native';
-
-const HomeScreen = () => (
-  <View style={styles.container}>
-    <Text style={styles.text}>Home Screen</Text>
-  </View>
-);
+import { HomeScreen } from '@app/home/HomeScreen';
 
 const SearchScreen = () => (
   <View style={styles.container}>
@@ -88,6 +77,7 @@ const MainTabsNavigator: React.FC = () => {
         options={{
           title: 'Accueil',
           tabBarLabel: 'Accueil',
+          headerShown: false,
           // tabBarIcon: ({ color, size }) => <Icon name="home" size={size} color={color} />,
         }}
       />
