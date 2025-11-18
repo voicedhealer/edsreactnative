@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+.expo/
+dist/
+web-build/
+build/
+*.tsbuildinfo
+
+# Generated files
+.expo/types/
+expo-env.d.ts
+
+# Native folders
+ios/
+android/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Assets (peut contenir des fichiers binaires)
+assets/
+
