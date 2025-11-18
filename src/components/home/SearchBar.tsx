@@ -320,9 +320,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           </View>
         </View>
 
-        {/* Séparateur */}
-        <View style={styles.separator} />
-
         {/* Section Localisation */}
         <View style={styles.locationSection}>
           <Text style={styles.locationIcon}>📍</Text>
@@ -389,9 +386,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           </View>
         </View>
 
-        {/* Séparateur */}
-        <View style={styles.separator} />
-
         {/* Sélecteur rayon */}
         <View style={styles.radiusSection}>
           <ScrollView
@@ -446,20 +440,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     overflow: 'visible',
+    zIndex: 100,
+    elevation: 5, // Android
   },
   form: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     padding: SPACING.md,
     gap: SPACING.md,
-    alignItems: 'center',
   },
   envieSection: {
-    flex: 2,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    minWidth: 200,
+    width: '100%',
   },
   label: {
     color: COLORS.brandOrange,
@@ -502,16 +494,14 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   separator: {
-    width: 1,
-    height: 32,
-    backgroundColor: COLORS.gray200,
+    display: 'none', // Masquer les séparateurs verticaux sur mobile
   },
   locationSection: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
-    minWidth: 150,
+    width: '100%',
+    position: 'relative',
   },
   locationIcon: {
     fontSize: FONT_SIZES.lg,
@@ -529,7 +519,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     ...Shadows.cardHover,
     maxHeight: 320,
-    zIndex: 50,
+    zIndex: 1000,
+    elevation: 10, // Android
   },
   dropdownScroll: {
     maxHeight: 320,
@@ -590,8 +581,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   submitButton: {
-    flex: 1,
-    minWidth: 120,
+    width: '100%',
     borderRadius: BORDER_RADIUS.md,
     overflow: 'hidden',
     ...Shadows.buttonGradient,

@@ -65,6 +65,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginVertical: SPACING.md,
+    zIndex: 1,
   },
   title: {
     fontSize: FONT_SIZES.lg,

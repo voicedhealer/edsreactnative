@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { usePopularEstablishments, useNearbyEstablishments } from '@hooks';
@@ -16,6 +17,7 @@ type NavigationProp = NativeStackNavigationProp<AppStackParamList, 'MainTabs'>;
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const [city, setCity] = useState('');
   const [activity, setActivity] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -102,7 +104,7 @@ export const HomeScreen: React.FC = () => {
           start={HeroGradient.start}
           end={HeroGradient.end}
           locations={HeroGradient.locations}
-          style={styles.heroSection}
+          style={[styles.heroSection, { paddingTop: insets.top + SPACING.xl }]}
         >
           <Text style={styles.heroTitle}>Envie2Sortir</Text>
           <Text style={styles.heroSubtitle}>Trouvez votre prochaine sortie</Text>
@@ -119,7 +121,7 @@ export const HomeScreen: React.FC = () => {
         </View>
 
         {/* Categories Section */}
-        <View style={styles.section}>
+        <View style={[styles.section, styles.categoriesSection]}>
           <CategoryGrid onCategoryPress={handleCategoryPress} />
         </View>
 
@@ -156,17 +158,21 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xl,
   },
   heroSection: {
-    paddingTop: SPACING.xxl + SPACING.md,
     paddingBottom: SPACING.xl,
     paddingHorizontal: SPACING.lg,
     alignItems: 'center',
+    minHeight: 200,
+    justifyContent: 'center',
   },
   heroTitle: {
     ...Typography.h1,
     fontSize: 36, // Légèrement réduit pour mobile
     color: COLORS.textLight,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
     textAlign: 'center',
+    fontWeight: '800',
+    lineHeight: 44,
+    paddingHorizontal: SPACING.md,
   },
   heroSubtitle: {
     ...Typography.body,
@@ -174,17 +180,26 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
     opacity: 0.95,
     textAlign: 'center',
+    lineHeight: 24,
+    marginTop: SPACING.xs,
   },
   searchBarContainer: {
     paddingHorizontal: SPACING.md,
     marginTop: -SPACING.lg,
     marginBottom: SPACING.md,
+    zIndex: 100,
   },
   geoContainer: {
     paddingHorizontal: SPACING.md,
     marginBottom: SPACING.md,
+    marginTop: SPACING.sm,
   },
   section: {
     marginTop: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+  },
+  categoriesSection: {
+    marginTop: SPACING.xl,
+    zIndex: 1,
   },
 });
