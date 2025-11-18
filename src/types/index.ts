@@ -54,4 +54,80 @@ export interface PaginatedResponse<T> {
   hasMore: boolean;
 }
 
+// Types pour les établissements
+export interface Establishment {
+  id: string;
+  name: string;
+  description?: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string;
+  email?: string;
+  website?: string;
+  images?: string[];
+  rating?: number;
+  priceRange?: '€' | '€€' | '€€€' | '€€€€';
+  category: string;
+  tags?: string[];
+  openingHours?: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Types pour les événements
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  establishmentId: string;
+  establishment?: Establishment;
+  startDate: string;
+  endDate?: string;
+  price?: number;
+  images?: string[];
+  category: string;
+  tags?: string[];
+  maxParticipants?: number;
+  currentParticipants?: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Types pour les favoris
+export interface Favorite {
+  id: string;
+  userId: string;
+  establishmentId?: string;
+  eventId?: string;
+  establishment?: Establishment;
+  event?: Event;
+  createdAt: string;
+}
+
+// Types pour la recherche
+export interface SearchFilters {
+  query?: string;
+  category?: string;
+  city?: string;
+  priceRange?: string;
+  tags?: string[];
+  latitude?: number;
+  longitude?: number;
+  radius?: number; // en km
+  minRating?: number;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface SearchParams extends SearchFilters {
+  page?: number;
+  limit?: number;
+  sortBy?: 'relevance' | 'rating' | 'distance' | 'date' | 'price';
+  sortOrder?: 'asc' | 'desc';
+}
+
 // Ajoutez vos types personnalisés ici

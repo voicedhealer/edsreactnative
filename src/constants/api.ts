@@ -1,7 +1,7 @@
 // Configuration des URLs API backend
 
 const API_BASE_URL: string =
-  (process.env.EXPO_PUBLIC_API_BASE_URL as string) || 'https://api.example.com';
+  (process.env.EXPO_PUBLIC_API_BASE_URL as string) || 'https://envie2sortir.railway.app/api';
 
 export const API_ENDPOINTS = {
   // Authentification
@@ -21,7 +21,41 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `${API_BASE_URL}/users/${id}`,
   },
 
-  // Ajoutez vos endpoints ici
+  // Établissements
+  ESTABLISHMENTS: {
+    BASE: `${API_BASE_URL}/establishments`,
+    BY_ID: (id: string) => `${API_BASE_URL}/establishments/${id}`,
+    SEARCH: `${API_BASE_URL}/establishments/search`,
+    POPULAR: `${API_BASE_URL}/establishments/popular`,
+    NEARBY: `${API_BASE_URL}/establishments/nearby`,
+  },
+
+  // Événements
+  EVENTS: {
+    BASE: `${API_BASE_URL}/events`,
+    BY_ID: (id: string) => `${API_BASE_URL}/events/${id}`,
+    SEARCH: `${API_BASE_URL}/events/search`,
+    UPCOMING: `${API_BASE_URL}/events/upcoming`,
+    BY_ESTABLISHMENT: (id: string) => `${API_BASE_URL}/events/establishment/${id}`,
+  },
+
+  // Favoris
+  FAVORITES: {
+    BASE: `${API_BASE_URL}/favorites`,
+    BY_USER: (userId: string) => `${API_BASE_URL}/favorites/user/${userId}`,
+    ADD: `${API_BASE_URL}/favorites`,
+    REMOVE: (id: string) => `${API_BASE_URL}/favorites/${id}`,
+    CHECK: (type: 'establishment' | 'event', id: string) =>
+      `${API_BASE_URL}/favorites/check/${type}/${id}`,
+  },
+
+  // Recherche
+  SEARCH: {
+    BASE: `${API_BASE_URL}/search`,
+    ESTABLISHMENTS: `${API_BASE_URL}/search/establishments`,
+    EVENTS: `${API_BASE_URL}/search/events`,
+    ALL: `${API_BASE_URL}/search/all`,
+  },
 };
 
 export const API_CONFIG: {

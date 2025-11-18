@@ -95,17 +95,59 @@ if (isAvailable) {
 }
 ```
 
-## Exemple de service API
+## API Client
+
+Le client API (`apiClient.ts`) utilise Axios avec interceptors pour :
+
+- **Authentification automatique** : Ajoute le token Bearer à chaque requête
+- **Refresh token** : Rafraîchit automatiquement le token sur erreur 401
+- **Gestion d'erreurs** : Gestion centralisée des erreurs API
+- **Queue de requêtes** : Met en queue les requêtes pendant le refresh
+
+### Utilisation directe
+
+```typescript
+import { apiClient } from '@services/apiClient';
+
+// GET
+const { data } = await apiClient.get('/users/123');
+
+// POST
+const { data } = await apiClient.post('/users', { name: 'John' });
+
+// PUT
+const { data } = await apiClient.put('/users/123', { name: 'Jane' });
+
+// DELETE
+await apiClient.delete('/users/123');
+```
+
+### Gestion des erreurs
+
+```typescript
+import { apiClient, getApiError } from '@services/apiClient';
+
+try {
+  await apiClient.get('/users/123');
+} catch (error) {
+  const apiError = getApiError(error);
+  console.error(apiError.message, apiError.status);
+}
+```
+
+## React Query Hooks
+
+Les hooks React Query sont disponibles dans `src/services/queries/`. Voir la documentation dans `queries/README.md`.
+
+## Exemple de service API (ancien style)
 
 ```typescript
 import { User } from '@types';
 import { API_ENDPOINTS } from '@constants';
+import { apiClient } from './apiClient';
 
 export const fetchUser = async (id: string): Promise<User> => {
-  const response = await fetch(API_ENDPOINTS.USERS.BY_ID(id));
-  if (!response.ok) {
-    throw new Error('Failed to fetch user');
-  }
-  return response.json();
+  const { data } = await apiClient.get<User>(API_ENDPOINTS.USERS.BY_ID(id));
+  return data;
 };
 ```
