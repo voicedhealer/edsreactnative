@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
@@ -38,7 +39,8 @@ export const QueryProvider: React.FC<QueryProviderProps> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {__DEV__ && <ReactQueryDevtools initialIsOpen={false} />}
+      {/* ReactQueryDevtools n'est compatible qu'avec le web, pas avec React Native */}
+      {__DEV__ && Platform.OS === 'web' && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 };

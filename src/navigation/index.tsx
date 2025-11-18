@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { RootStackParamList } from './types';
 import { AuthNavigator } from './AuthNavigator';
@@ -9,7 +9,7 @@ import { linkingConfiguration } from './linking';
 import { useAuthStore } from '@store';
 import { COLORS } from '@constants';
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
   const { user, isLoading, checkSession } = useAuthStore();
@@ -24,7 +24,7 @@ export const RootNavigator: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={COLORS.primary || '#ff751f'} />
       </View>
     );
   }

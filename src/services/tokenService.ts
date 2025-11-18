@@ -1,7 +1,33 @@
-import * as Keychain from 'react-native-keychain';
+import * as SecureStore from 'expo-secure-store';
 import { createClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@env';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
+
+// Importer les variables d'environnement avec gestion d'erreur
+let SUPABASE_URL: string | undefined;
+let SUPABASE_ANON_KEY: string | undefined;
+
+try {
+  const envModule = require('@env');
+  // Essayer d'abord sans préfixe, puis avec préfixe NEXT_PUBLIC_
+  SUPABASE_URL =
+    envModule.SUPABASE_URL ||
+    envModule.NEXT_PUBLIC_SUPABASE_URL ||
+    envModule.EXPO_PUBLIC_SUPABASE_URL;
+  SUPABASE_ANON_KEY =
+    envModule.SUPABASE_ANON_KEY ||
+    envModule.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    envModule.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+} catch (error) {
+  // Fallback sur process.env avec plusieurs formats possibles
+  SUPABASE_URL =
+    process.env.SUPABASE_URL ||
+    process.env.EXPO_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
+  SUPABASE_ANON_KEY =
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+}
 
 const ACCESS_TOKEN_KEY = 'supabase_access_token';
 const REFRESH_TOKEN_KEY = 'supabase_refresh_token';
@@ -14,11 +40,11 @@ export interface TokenStorage {
 }
 
 /**
- * Service de gestion sécurisée des tokens avec Keychain
+ * Service de gestion sécurisée des tokens avec SecureStore (Expo)
  */
 export class TokenService {
   /**
-   * Sauvegarde les tokens de manière sécurisée dans Keychain
+   * Sauvegarde les tokens de manière sécurisée dans SecureStore
    */
   static async saveTokens(session: Session): Promise<void> {
     try {
@@ -26,25 +52,15 @@ export class TokenService {
       const refreshToken = session.refresh_token;
       const expiresAt = session.expires_at ? session.expires_at * 1000 : null; // Convertir en millisecondes
 
-      // Sauvegarder l'access token dans Keychain
-      await Keychain.setGenericPassword(ACCESS_TOKEN_KEY, accessToken, {
-        service: ACCESS_TOKEN_KEY,
-        accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-      });
+      // Sauvegarder l'access token dans SecureStore
+      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
 
-      // Sauvegarder le refresh token dans Keychain (plus sensible)
-      await Keychain.setGenericPassword(REFRESH_TOKEN_KEY, refreshToken, {
-        service: REFRESH_TOKEN_KEY,
-        accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE, // Optionnel : biométrie
-      });
+      // Sauvegarder le refresh token dans SecureStore
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
 
       // Sauvegarder les métadonnées de session (expiresAt)
       if (expiresAt) {
-        await Keychain.setGenericPassword(SESSION_KEY, JSON.stringify({ expiresAt }), {
-          service: SESSION_KEY,
-          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        });
+        await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify({ expiresAt }));
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des tokens:', error);
@@ -53,43 +69,31 @@ export class TokenService {
   }
 
   /**
-   * Récupère les tokens depuis Keychain
+   * Récupère les tokens depuis SecureStore
    */
   static async getTokens(): Promise<TokenStorage | null> {
     try {
-      const accessTokenCreds = await Keychain.getGenericPassword({
-        service: ACCESS_TOKEN_KEY,
-      });
-      const refreshTokenCreds = await Keychain.getGenericPassword({
-        service: REFRESH_TOKEN_KEY,
-        authenticationPrompt: {
-          title: 'Authentification requise',
-          subtitle: 'Veuillez vous authentifier pour accéder à votre compte',
-          description: 'Utilisez votre empreinte digitale ou votre code PIN',
-          cancel: 'Annuler',
-        },
-      });
-      const sessionCreds = await Keychain.getGenericPassword({
-        service: SESSION_KEY,
-      });
+      const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+      const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+      const sessionData = await SecureStore.getItemAsync(SESSION_KEY);
 
-      if (!accessTokenCreds || !refreshTokenCreds) {
+      if (!accessToken || !refreshToken) {
         return null;
       }
 
       let expiresAt: number | null = null;
-      if (sessionCreds) {
+      if (sessionData) {
         try {
-          const sessionData = JSON.parse(sessionCreds.password);
-          expiresAt = sessionData.expiresAt;
-        } catch {
+          const parsed = JSON.parse(sessionData);
+          expiresAt = parsed.expiresAt || null;
+        } catch (e) {
           // Ignorer l'erreur de parsing
         }
       }
 
       return {
-        accessToken: accessTokenCreds.password,
-        refreshToken: refreshTokenCreds.password,
+        accessToken,
+        refreshToken,
         expiresAt,
       };
     } catch (error) {
@@ -99,79 +103,13 @@ export class TokenService {
   }
 
   /**
-   * Vérifie si les tokens sont expirés
-   */
-  static async isTokenExpired(): Promise<boolean> {
-    const tokens = await this.getTokens();
-    if (!tokens || !tokens.expiresAt) {
-      return true;
-    }
-
-    // Ajouter une marge de sécurité de 5 minutes avant expiration
-    const bufferTime = 5 * 60 * 1000; // 5 minutes en millisecondes
-    return Date.now() >= tokens.expiresAt - bufferTime;
-  }
-
-  /**
-   * Rafraîchit le token d'accès en utilisant le refresh token
-   * @param supabaseClient - Client Supabase optionnel (pour éviter le cycle de dépendances)
-   */
-  static async refreshAccessToken(supabaseClient?: SupabaseClient): Promise<Session | null> {
-    try {
-      const tokens = await this.getTokens();
-      if (!tokens || !tokens.refreshToken) {
-        return null;
-      }
-
-      // Créer un client temporaire si aucun n'est fourni (pour éviter le cycle de dépendances)
-      const url = SUPABASE_URL || process.env.SUPABASE_URL || '';
-      const key = SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
-
-      if (!url || !key) {
-        console.error('Missing Supabase environment variables for token refresh');
-        return null;
-      }
-
-      const client =
-        supabaseClient ||
-        createClient(url, key, {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        });
-
-      const { data, error } = await client.auth.refreshSession({
-        refresh_token: tokens.refreshToken,
-      });
-
-      if (error) {
-        console.error('Erreur lors du refresh du token:', error);
-        return null;
-      }
-
-      if (data.session) {
-        await this.saveTokens(data.session);
-        return data.session;
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Erreur lors du refresh du token:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Supprime tous les tokens de Keychain
+   * Supprime tous les tokens stockés
    */
   static async clearTokens(): Promise<void> {
     try {
-      await Promise.all([
-        Keychain.resetGenericPassword({ service: ACCESS_TOKEN_KEY }),
-        Keychain.resetGenericPassword({ service: REFRESH_TOKEN_KEY }),
-        Keychain.resetGenericPassword({ service: SESSION_KEY }),
-      ]);
+      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(SESSION_KEY);
     } catch (error) {
       console.error('Erreur lors de la suppression des tokens:', error);
       throw error;
@@ -179,76 +117,72 @@ export class TokenService {
   }
 
   /**
-   * Vérifie si l'authentification biométrique est disponible
+   * Vérifie si le token d'accès est expiré
    */
-  static async isBiometricAvailable(): Promise<boolean> {
+  static async isTokenExpired(): Promise<boolean> {
     try {
-      const biometryType = await Keychain.getSupportedBiometryType();
-      return biometryType !== null;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Configure l'authentification biométrique pour les tokens
-   */
-  static async enableBiometricAuth(): Promise<boolean> {
-    try {
-      const isAvailable = await this.isBiometricAvailable();
-      if (!isAvailable) {
-        return false;
-      }
-
-      // Re-sauvegarder le refresh token avec biométrie
       const tokens = await this.getTokens();
-      if (tokens && tokens.refreshToken) {
-        await Keychain.setGenericPassword(REFRESH_TOKEN_KEY, tokens.refreshToken, {
-          service: REFRESH_TOKEN_KEY,
-          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-          accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
-        });
+      if (!tokens || !tokens.expiresAt) {
         return true;
       }
-      return false;
+      // Ajouter une marge de sécurité de 5 minutes avant expiration
+      const bufferTime = 5 * 60 * 1000; // 5 minutes en millisecondes
+      return Date.now() >= tokens.expiresAt - bufferTime;
     } catch (error) {
-      console.error("Erreur lors de l'activation de la biométrie:", error);
-      return false;
+      console.error("Erreur lors de la vérification de l'expiration du token:", error);
+      return true;
     }
   }
 
   /**
-   * Désactive l'authentification biométrique
+   * Rafraîchit le token d'accès en utilisant le refresh token
    */
-  static async disableBiometricAuth(): Promise<void> {
+  static async refreshAccessToken(
+    supabaseClient?: SupabaseClient
+  ): Promise<{ accessToken: string; refreshToken: string } | null> {
     try {
       const tokens = await this.getTokens();
-      if (tokens && tokens.refreshToken) {
-        await Keychain.setGenericPassword(REFRESH_TOKEN_KEY, tokens.refreshToken, {
-          service: REFRESH_TOKEN_KEY,
-          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-          // Pas d'accessControl = pas de biométrie
-        });
+      if (!tokens || !tokens.refreshToken) {
+        return null;
       }
-    } catch (error) {
-      console.error('Erreur lors de la désactivation de la biométrie:', error);
-    }
-  }
 
-  /**
-   * Récupère le type de biométrie disponible
-   */
-  static async getBiometryType(): Promise<string | null> {
-    try {
-      return await Keychain.getSupportedBiometryType();
-    } catch {
+      // Créer un client Supabase temporaire si non fourni
+      let client = supabaseClient;
+      if (!client) {
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+          throw new Error('Supabase credentials not available');
+        }
+        client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+
+      // Rafraîchir la session
+      const { data, error } = await client.auth.refreshSession({
+        refresh_token: tokens.refreshToken,
+      });
+
+      if (error || !data.session) {
+        console.error('Erreur lors du rafraîchissement du token:', error);
+        await this.clearTokens();
+        return null;
+      }
+
+      // Sauvegarder la nouvelle session
+      await this.saveTokens(data.session);
+
+      return {
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token,
+      };
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement du token:', error);
+      await this.clearTokens();
       return null;
     }
   }
 }
 
 /**
- * Hook pour gérer le refresh automatique des tokens
+ * Fonction pour gérer le refresh automatique des tokens
  */
 export const setupTokenRefresh = () => {
   let refreshInterval: NodeJS.Timeout | null = null;

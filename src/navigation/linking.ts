@@ -26,6 +26,7 @@ export const linkingConfiguration: LinkingOptions<RootStackParamList> = {
             },
           },
           EventDetails: 'event/:eventId',
+          EstablishmentDetails: 'establishment/:establishmentId',
           CreateEvent: 'create-event',
           EditProfile: 'edit-profile',
           Settings: 'settings',

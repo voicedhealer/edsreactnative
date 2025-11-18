@@ -1,16 +1,16 @@
-import * as Keychain from 'react-native-keychain';
+import * as SecureStore from 'expo-secure-store';
 import type { Session } from '@supabase/supabase-js';
 import { TokenService } from './tokenService';
 
 /**
- * Storage personnalisé pour Supabase utilisant Keychain au lieu d'AsyncStorage
+ * Storage personnalisé pour Supabase utilisant SecureStore (Expo) au lieu d'AsyncStorage
  * pour une meilleure sécurité des tokens
  */
 export const keychainStorage = {
   getItem: async (key: string): Promise<string | null> => {
     try {
       if (key.includes('session')) {
-        // Pour les sessions, utiliser Keychain
+        // Pour les sessions, utiliser TokenService
         const tokens = await TokenService.getTokens();
         if (tokens && tokens.accessToken && tokens.refreshToken) {
           // Reconstruire la session depuis les tokens
@@ -23,9 +23,8 @@ export const keychainStorage = {
         }
         return null;
       }
-      // Pour les autres clés, utiliser Keychain générique
-      const creds = await Keychain.getGenericPassword({ service: key });
-      return creds ? creds.password : null;
+      // Pour les autres clés, utiliser SecureStore
+      return await SecureStore.getItemAsync(key);
     } catch (error) {
       console.error(`Erreur lors de la récupération de ${key}:`, error);
       return null;
@@ -35,15 +34,12 @@ export const keychainStorage = {
   setItem: async (key: string, value: string): Promise<void> => {
     try {
       if (key.includes('session')) {
-        // Pour les sessions, parser et sauvegarder dans Keychain
+        // Pour les sessions, parser et sauvegarder dans SecureStore
         const session: Session = JSON.parse(value);
         await TokenService.saveTokens(session);
       } else {
-        // Pour les autres clés, utiliser Keychain générique
-        await Keychain.setGenericPassword(key, value, {
-          service: key,
-          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        });
+        // Pour les autres clés, utiliser SecureStore
+        await SecureStore.setItemAsync(key, value);
       }
     } catch (error) {
       console.error(`Erreur lors de la sauvegarde de ${key}:`, error);
@@ -54,12 +50,15 @@ export const keychainStorage = {
   removeItem: async (key: string): Promise<void> => {
     try {
       if (key.includes('session')) {
+        // Pour les sessions, supprimer via TokenService
         await TokenService.clearTokens();
       } else {
-        await Keychain.resetGenericPassword({ service: key });
+        // Pour les autres clés, utiliser SecureStore
+        await SecureStore.deleteItemAsync(key);
       }
     } catch (error) {
       console.error(`Erreur lors de la suppression de ${key}:`, error);
+      throw error;
     }
   },
 };

@@ -1,0 +1,1 @@
+export { EstablishmentDetailScreen } from './EstablishmentDetailScreen';

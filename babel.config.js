@@ -30,6 +30,9 @@ module.exports = function (api) {
           path: '.env',
           safe: false,
           allowUndefined: true,
+          // Charger toutes les variables du fichier .env
+          blocklist: null,
+          allowlist: null,
         },
       ],
     ],

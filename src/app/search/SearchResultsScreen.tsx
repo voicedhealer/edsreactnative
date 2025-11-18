@@ -102,9 +102,7 @@ export const SearchResultsScreen: React.FC = () => {
   };
 
   const handleEstablishmentPress = (establishment: Establishment) => {
-    // Navigation vers les détails de l'établissement
-    // navigation.navigate('EventDetails', { eventId: establishment.id });
-    console.log('Établissement sélectionné:', establishment);
+    navigation.navigate('EstablishmentDetails', { establishmentId: establishment.id });
   };
 
   const renderEstablishment = ({ item }: { item: Establishment }) => (

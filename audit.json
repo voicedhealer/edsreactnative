@@ -1,0 +1,243 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "@expo/cli": {
+      "name": "@expo/cli",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        "@expo/config",
+        "@expo/config-plugins",
+        "@expo/metro-config",
+        "@expo/prebuild-config",
+        "glob"
+      ],
+      "effects": [],
+      "range": ">=0.19.0-canary-20240625-2333e70",
+      "nodes": ["node_modules/@expo/cli"],
+      "fixAvailable": true
+    },
+    "@expo/config": {
+      "name": "@expo/config",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["@expo/config-plugins", "glob", "sucrase"],
+      "effects": ["@expo/prebuild-config", "expo", "expo-constants"],
+      "range": ">=9.1.0-canary-20240628-1ba8152",
+      "nodes": ["node_modules/@expo/config"],
+      "fixAvailable": {
+        "name": "expo",
+        "version": "51.0.39",
+        "isSemVerMajor": true
+      }
+    },
+    "@expo/config-plugins": {
+      "name": "@expo/config-plugins",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["glob"],
+      "effects": [],
+      "range": "8.0.9-canary-20240719-83ee47b - 8.0.9-canary-20240814-ce0f7d5 || >=8.1.0-canary-20240904-69100c1",
+      "nodes": ["node_modules/@expo/config-plugins"],
+      "fixAvailable": true
+    },
+    "@expo/devcert": {
+      "name": "@expo/devcert",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["glob"],
+      "effects": [],
+      "range": ">=1.1.4",
+      "nodes": ["node_modules/@expo/devcert"],
+      "fixAvailable": true
+    },
+    "@expo/fingerprint": {
+      "name": "@expo/fingerprint",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["glob"],
+      "effects": ["expo"],
+      "range": "0.13.1-canary-20250611-f0afe80 - 0.15.3",
+      "nodes": ["node_modules/@expo/fingerprint"],
+      "fixAvailable": {
+        "name": "expo",
+        "version": "51.0.39",
+        "isSemVerMajor": true
+      }
+    },
+    "@expo/metro-config": {
+      "name": "@expo/metro-config",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["@expo/config", "glob"],
+      "effects": [],
+      "range": ">=0.19.0-canary-20240625-2333e70",
+      "nodes": ["node_modules/@expo/metro-config"],
+      "fixAvailable": true
+    },
+    "@expo/prebuild-config": {
+      "name": "@expo/prebuild-config",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["@expo/config", "@expo/config-plugins"],
+      "effects": [],
+      "range": "7.0.9-canary-20240719-83ee47b - 7.0.9-canary-20240814-ce0f7d5 || >=7.1.0-canary-20240904-69100c1",
+      "nodes": ["node_modules/@expo/prebuild-config"],
+      "fixAvailable": true
+    },
+    "expo": {
+      "name": "expo",
+      "severity": "high",
+      "isDirect": true,
+      "via": [
+        "@expo/cli",
+        "@expo/config",
+        "@expo/config-plugins",
+        "@expo/fingerprint",
+        "@expo/metro-config",
+        "expo-asset",
+        "expo-constants",
+        "expo-modules-autolinking"
+      ],
+      "effects": [],
+      "range": ">=52.0.0-canary-20240625-2333e70",
+      "nodes": ["node_modules/expo"],
+      "fixAvailable": {
+        "name": "expo",
+        "version": "51.0.39",
+        "isSemVerMajor": true
+      }
+    },
+    "expo-asset": {
+      "name": "expo-asset",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["expo-constants"],
+      "effects": [],
+      "range": ">=10.0.11-canary-20240625-2333e70",
+      "nodes": ["node_modules/expo-asset"],
+      "fixAvailable": true
+    },
+    "expo-constants": {
+      "name": "expo-constants",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["@expo/config"],
+      "effects": ["expo-asset", "expo-linking"],
+      "range": ">=16.0.3-canary-20240625-2333e70",
+      "nodes": ["node_modules/expo-constants"],
+      "fixAvailable": {
+        "name": "expo-linking",
+        "version": "6.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "expo-linking": {
+      "name": "expo-linking",
+      "severity": "high",
+      "isDirect": true,
+      "via": ["expo-constants"],
+      "effects": [],
+      "range": ">=6.3.2-canary-20240625-2333e70",
+      "nodes": ["node_modules/expo-linking"],
+      "fixAvailable": {
+        "name": "expo-linking",
+        "version": "6.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "expo-modules-autolinking": {
+      "name": "expo-modules-autolinking",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["glob"],
+      "effects": ["expo"],
+      "range": "2.1.0-canary-20250122-166c2cb - 3.0.19 || 3.1.0-canary-20250919-7a31b96 - 3.1.0-canary-20251023-4c86f95",
+      "nodes": ["node_modules/expo-modules-autolinking"],
+      "fixAvailable": {
+        "name": "expo",
+        "version": "51.0.39",
+        "isSemVerMajor": true
+      }
+    },
+    "glob": {
+      "name": "glob",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1109809,
+          "name": "glob",
+          "dependency": "glob",
+          "title": "glob CLI: Command injection via -c/--cmd executes matches with shell:true",
+          "url": "https://github.com/advisories/GHSA-5j98-mcp5-4vw2",
+          "severity": "high",
+          "cwe": ["CWE-78"],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H"
+          },
+          "range": ">=10.3.7 <=11.0.3"
+        }
+      ],
+      "effects": [
+        "@expo/cli",
+        "@expo/config",
+        "@expo/config-plugins",
+        "@expo/devcert",
+        "@expo/fingerprint",
+        "@expo/metro-config",
+        "expo-modules-autolinking",
+        "sucrase"
+      ],
+      "range": "10.3.7 - 11.0.3",
+      "nodes": [
+        "node_modules/@expo/cli/node_modules/glob",
+        "node_modules/@expo/config-plugins/node_modules/glob",
+        "node_modules/@expo/config/node_modules/glob",
+        "node_modules/@expo/devcert/node_modules/glob",
+        "node_modules/@expo/fingerprint/node_modules/glob",
+        "node_modules/@expo/metro-config/node_modules/glob",
+        "node_modules/expo-modules-autolinking/node_modules/glob",
+        "node_modules/sucrase/node_modules/glob"
+      ],
+      "fixAvailable": {
+        "name": "expo",
+        "version": "51.0.39",
+        "isSemVerMajor": true
+      }
+    },
+    "sucrase": {
+      "name": "sucrase",
+      "severity": "high",
+      "isDirect": false,
+      "via": ["glob"],
+      "effects": ["@expo/config"],
+      "range": ">=3.35.0",
+      "nodes": ["node_modules/sucrase"],
+      "fixAvailable": {
+        "name": "expo",
+        "version": "51.0.39",
+        "isSemVerMajor": true
+      }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 14,
+      "critical": 0,
+      "total": 14
+    },
+    "dependencies": {
+      "prod": 732,
+      "dev": 208,
+      "optional": 12,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 951
+    }
+  }
+}

@@ -20,6 +20,7 @@ export type MainTabParamList = {
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   EventDetails: { eventId: string };
+  EstablishmentDetails: { establishmentId: string };
   CreateEvent: undefined;
   EditProfile: undefined;
   Settings: undefined;

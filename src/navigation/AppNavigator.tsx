@@ -1,5 +1,6 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { View, Text, StyleSheet } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AppStackParamList, MainTabParamList } from './types';
 import { COLORS } from '@constants';
@@ -7,6 +8,7 @@ import { COLORS } from '@constants';
 // Importez vos écrans ici
 import { HomeScreen } from '@app/home/HomeScreen';
 import { SearchResultsScreen } from '@app/search/SearchResultsScreen';
+import { EstablishmentDetailScreen } from '@app/establishment/EstablishmentDetailScreen';
 
 const SearchScreen = () => (
   <View style={styles.container}>
@@ -57,19 +59,16 @@ const MainTabsNavigator: React.FC = () => {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarActiveTintColor: COLORS.primary || '#ff751f',
+        tabBarInactiveTintColor: COLORS.textSecondary || '#6b7280',
         tabBarStyle: {
-          backgroundColor: COLORS.background,
-          borderTopColor: COLORS.border,
+          backgroundColor: COLORS.background || '#ffffff',
+          borderTopColor: COLORS.border || '#e5e7eb',
         },
         headerStyle: {
-          backgroundColor: COLORS.primary,
+          backgroundColor: COLORS.primary || '#ff751f',
         },
-        headerTintColor: COLORS.textLight,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerTintColor: COLORS.textLight || '#ffffff',
       }}
     >
       <Tab.Screen
@@ -114,22 +113,16 @@ const MainTabsNavigator: React.FC = () => {
 };
 
 // Stack Navigator principal
-const Stack = createNativeStackNavigator<AppStackParamList>();
+const Stack = createStackNavigator<AppStackParamList>();
 
 export const AppNavigator: React.FC = () => {
   return (
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: COLORS.primary,
+          backgroundColor: COLORS.primary || '#ff751f',
         },
-        headerTintColor: COLORS.textLight,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-        contentStyle: {
-          backgroundColor: COLORS.background,
-        },
+        headerTintColor: COLORS.textLight || '#ffffff',
       }}
     >
       <Stack.Screen
@@ -144,6 +137,13 @@ export const AppNavigator: React.FC = () => {
         component={EventDetailsScreen}
         options={{
           title: "Détails de l'événement",
+        }}
+      />
+      <Stack.Screen
+        name="EstablishmentDetails"
+        component={EstablishmentDetailScreen}
+        options={{
+          title: "Détails de l'établissement",
         }}
       />
       <Stack.Screen

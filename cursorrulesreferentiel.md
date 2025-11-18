@@ -663,4 +663,6 @@ Pour chaque composant créé, vérifier:
 
 ---
 
+## 500 à 600 lignes maximum avant refactorisation du code
+
 Ce guide garantit une cohérence maximale entre le site web et l'application mobile. Chaque composant doit respecter ces spécifications exactes pour une expérience utilisateur identique.
