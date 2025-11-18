@@ -69,12 +69,24 @@ export interface Establishment {
   website?: string;
   images?: string[];
   rating?: number;
+  avgRating?: number; // Note moyenne
   priceRange?: '€' | '€€' | '€€€' | '€€€€';
+  priceMin?: number; // Prix minimum
+  prixMoyen?: number; // Prix moyen
   category: string;
   tags?: string[];
   openingHours?: Record<string, string>;
   createdAt: string;
   updatedAt: string;
+  // Propriétés étendues pour filtres et badges
+  subscription?: 'FREE' | 'PREMIUM'; // Type d'abonnement
+  viewsCount?: number; // Nombre de vues (pour filtre popular)
+  likesCount?: number; // Nombre de likes (pour filtre wanted)
+  score?: number; // Score de l'établissement
+  isHot?: boolean; // Badge tendance
+  activeDeal?: boolean; // Badge bon plan actif
+  isOpen?: boolean; // Statut ouvert/fermé
+  distance?: number; // Distance en km (calculée côté client)
 }
 
 // Types pour les événements

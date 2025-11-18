@@ -1,4 +1,5 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
+import type { SearchFilters } from '@types';
 
 // Types pour la navigation d'authentification
 export type AuthStackParamList = {
@@ -22,6 +23,12 @@ export type AppStackParamList = {
   CreateEvent: undefined;
   EditProfile: undefined;
   Settings: undefined;
+  SearchResults: {
+    city?: string;
+    activity?: string;
+    category?: string;
+    filters?: SearchFilters;
+  };
 };
 
 // Type racine combinant auth et app

@@ -6,6 +6,7 @@ import { COLORS } from '@constants';
 
 // Importez vos écrans ici
 import { HomeScreen } from '@app/home/HomeScreen';
+import { SearchResultsScreen } from '@app/search/SearchResultsScreen';
 
 const SearchScreen = () => (
   <View style={styles.container}>
@@ -165,6 +166,13 @@ export const AppNavigator: React.FC = () => {
         component={SettingsScreen}
         options={{
           title: 'Paramètres',
+        }}
+      />
+      <Stack.Screen
+        name="SearchResults"
+        component={SearchResultsScreen}
+        options={{
+          title: 'Résultats de recherche',
         }}
       />
     </Stack.Navigator>

@@ -1,6 +1,7 @@
 import * as Keychain from 'react-native-keychain';
-import { supabase } from './supabase';
-import type { Session } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@env';
+import type { Session, SupabaseClient } from '@supabase/supabase-js';
 
 const ACCESS_TOKEN_KEY = 'supabase_access_token';
 const REFRESH_TOKEN_KEY = 'supabase_refresh_token';
@@ -113,15 +114,34 @@ export class TokenService {
 
   /**
    * Rafraîchit le token d'accès en utilisant le refresh token
+   * @param supabaseClient - Client Supabase optionnel (pour éviter le cycle de dépendances)
    */
-  static async refreshAccessToken(): Promise<Session | null> {
+  static async refreshAccessToken(supabaseClient?: SupabaseClient): Promise<Session | null> {
     try {
       const tokens = await this.getTokens();
       if (!tokens || !tokens.refreshToken) {
         return null;
       }
 
-      const { data, error } = await supabase.auth.refreshSession({
+      // Créer un client temporaire si aucun n'est fourni (pour éviter le cycle de dépendances)
+      const url = SUPABASE_URL || process.env.SUPABASE_URL || '';
+      const key = SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+
+      if (!url || !key) {
+        console.error('Missing Supabase environment variables for token refresh');
+        return null;
+      }
+
+      const client =
+        supabaseClient ||
+        createClient(url, key, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        });
+
+      const { data, error } = await client.auth.refreshSession({
         refresh_token: tokens.refreshToken,
       });
 

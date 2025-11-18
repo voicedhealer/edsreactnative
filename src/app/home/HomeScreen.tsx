@@ -19,6 +19,7 @@ export const HomeScreen: React.FC = () => {
   const [activity, setActivity] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [searchRadius, setSearchRadius] = useState(5);
 
   // Récupérer les établissements populaires
   const {
@@ -43,16 +44,33 @@ export const HomeScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleSearch = () => {
-    // Navigation vers l'écran de recherche avec les paramètres
-    // navigation.navigate('Search', { city, activity });
-    console.log('Recherche:', { city, activity });
+  const handleSearch = (
+    envie: string,
+    cityValue: string,
+    radius: number,
+    coords?: { lat: number; lng: number }
+  ) => {
+    setSearchRadius(radius);
+    if (coords) {
+      setUserLocation(coords);
+    }
+    navigation.navigate('SearchResults', {
+      city: cityValue,
+      activity: envie,
+      filters: coords
+        ? {
+            latitude: coords.lat,
+            longitude: coords.lng,
+            radius,
+          }
+        : undefined,
+    });
   };
 
   const handleCategoryPress = (category: Category) => {
-    // Navigation vers l'écran de recherche avec la catégorie
-    // navigation.navigate('Search', { category: category.name });
-    console.log('Catégorie sélectionnée:', category);
+    navigation.navigate('SearchResults', {
+      category: category.name,
+    });
   };
 
   const handleEstablishmentPress = (establishment: Establishment) => {
@@ -85,11 +103,9 @@ export const HomeScreen: React.FC = () => {
 
       {/* Search Bar */}
       <SearchBar
-        city={city}
-        activity={activity}
-        onCityChange={setCity}
-        onActivityChange={setActivity}
-        onSearch={handleSearch}
+        onSubmit={handleSearch}
+        initialEnvie={activity}
+        initialCity={city}
         style={styles.searchBar}
       />
 
